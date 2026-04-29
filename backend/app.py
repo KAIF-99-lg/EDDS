@@ -74,7 +74,7 @@ def _load_keras(name):
     path = os.path.join(ML_DIR, name)
     if TF_OK and os.path.exists(path) and os.path.getsize(path) > 10000:
         try:
-            m = tf.keras.models.load_model(path)
+            m = tf.keras.models.load_model(path, compile=False)
             print(f"Loaded: {name}")
             return m
         except Exception as e:
