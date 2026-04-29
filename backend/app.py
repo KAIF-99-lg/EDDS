@@ -72,13 +72,23 @@ except Exception:
 
 def _load_keras(name):
     path = os.path.join(ML_DIR, name)
-    if TF_OK and os.path.exists(path) and os.path.getsize(path) > 10000:
+    if not (TF_OK and os.path.exists(path) and os.path.getsize(path) > 10000):
+        return None
+    # Try multiple loading strategies
+    strategies = [
+        lambda p: tf.keras.models.load_model(p, compile=False),
+        lambda p: tf.keras.models.load_model(p, compile=False, safe_mode=False),
+        lambda p: tf.saved_model.load(p),
+    ]
+    for strategy in strategies:
         try:
-            m = tf.keras.models.load_model(path, compile=False)
+            m = strategy(path)
             print(f"Loaded: {name}")
             return m
         except Exception as e:
-            print(f"Load failed {name}: {e}")
+            last_err = e
+            continue
+    print(f"Load failed {name}: {last_err}")
     return None
 
 def _load_pickle(name):
