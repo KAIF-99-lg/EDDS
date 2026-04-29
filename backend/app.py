@@ -33,35 +33,58 @@ MODELS = {
 
 def download_file(file_id, dest_path):
     print(f"Downloading {os.path.basename(dest_path)}...")
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
     session = requests.Session()
+
+    # Step 1: Initial request
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
     response = session.get(url, stream=True)
 
-    # Handle Google Drive large file warning page
+    # Step 2: Handle virus scan warning for large files
     token = None
     for key, value in response.cookies.items():
         if key.startswith("download_warning"):
             token = value
             break
 
-    if token:
-        response = session.get(url, params={"confirm": token}, stream=True)
+    # Also check response content for confirmation token
+    if not token and b"confirm=" in response.content[:2048]:
+        import re
+        match = re.search(rb"confirm=([0-9A-Za-z_]+)", response.content[:2048])
+        if match:
+            token = match.group(1).decode()
 
+    if token:
+        response = session.get(url, params={"confirm": token, "id": file_id}, stream=True)
+
+    # Step 3: Write file
+    total = 0
     with open(dest_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=32768):
+        for chunk in response.iter_content(chunk_size=65536):
             if chunk:
                 f.write(chunk)
-    print(f"Downloaded {os.path.basename(dest_path)}")
+                total += len(chunk)
+
+    size_mb = total / (1024 * 1024)
+    print(f"Downloaded {os.path.basename(dest_path)} ({size_mb:.1f} MB)")
+
+    # If file is too small it's likely an error page, delete it
+    if total < 1024:
+        os.remove(dest_path)
+        raise Exception(f"Download failed - got {total} bytes (likely HTML error page)")
 
 for filename, file_id in MODELS.items():
     dest = os.path.join(ML_DIR, filename)
+    # Re-download if file doesn't exist or is too small (corrupted/HTML page)
+    if os.path.exists(dest) and os.path.getsize(dest) < 1024:
+        os.remove(dest)
+        print(f"Removing corrupted {filename}")
     if not os.path.exists(dest):
         try:
             download_file(file_id, dest)
         except Exception as e:
             print(f"Failed to download {filename}: {e}")
     else:
-        print(f"Already exists: {filename}")
+        print(f"Already exists: {filename} ({os.path.getsize(dest)/(1024*1024):.1f} MB)")
 
 # ── App setup ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
