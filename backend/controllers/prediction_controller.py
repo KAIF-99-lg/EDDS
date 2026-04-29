@@ -27,7 +27,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 _models = {}
 
 def get_keras(name):
-    if name not in _models:
+    if name not in _models or _models[name] is None:
         path = os.path.join(BASE, name)
         if tf and os.path.exists(path) and os.path.getsize(path) > 1024:
             try:
@@ -37,12 +37,12 @@ def get_keras(name):
                 print(f"Failed to load {name}: {e}")
                 _models[name] = None
         else:
-            print(f"Model not ready: {name}")
+            print(f"Model not ready: {name} - path exists: {os.path.exists(os.path.join(BASE, name))}")
             _models[name] = None
     return _models[name]
 
 def get_pickle(name):
-    if name not in _models:
+    if name not in _models or _models[name] is None:
         path = os.path.join(BASE, name)
         if pickle and os.path.exists(path) and os.path.getsize(path) > 100:
             try:
