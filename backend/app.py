@@ -35,11 +35,10 @@ def download_file(file_id, dest_path):
     print(f"Downloading {os.path.basename(dest_path)}...")
     url = f"https://drive.google.com/uc?id={file_id}"
     gdown.download(url, dest_path, quiet=False, fuzzy=True)
+    if not os.path.exists(dest_path) or os.path.getsize(dest_path) == 0:
+        raise Exception(f"Download failed - file empty or missing")
     size = os.path.getsize(dest_path)
-    if size < 1024:
-        os.remove(dest_path)
-        raise Exception(f"Download failed - got {size} bytes")
-    print(f"Downloaded {os.path.basename(dest_path)} ({size/(1024*1024):.1f} MB)")
+    print(f"Downloaded {os.path.basename(dest_path)} ({size/(1024*1024):.2f} MB)")
 
 for filename, file_id in MODELS.items():
     dest = os.path.join(ML_DIR, filename)
