@@ -80,7 +80,11 @@ db.init_app(app)
 JWTManager(app)
 
 CORS(app, resources={r"/api/*": {
-    "origins": os.getenv("FRONTEND_URL", "http://localhost:5173"),
+    "origins": [
+        os.getenv("FRONTEND_URL", "http://localhost:5173"),
+        "http://localhost:5173",
+        "https://edds-teal.vercel.app",
+    ],
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
 }})
