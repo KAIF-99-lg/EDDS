@@ -14,14 +14,14 @@ ML_DIR = os.path.join(os.path.dirname(__file__), "ml_models")
 os.makedirs(ML_DIR, exist_ok=True)
 
 MODELS = {
-    "skin_model.h5":       "12Yg7X57BGaPBoTABeD_7UYv7JsrJoaxI",
-    "pneumonia_model.h5":  "1Kg8DC7WR36wxioYRsvg5K6wB-QQoJ7Nh",
-    "heart_scaler.pkl":    "1SN9cjfItVbiGO6WEkohVoqlfcq-oV_Ub",
-    "heart_model.pkl":     "1KL1m745h1wFlAL-GBvpQvBsPh3gQV_Ci",
-    "breast_model.h5":     "1vyt7OmEprrcv7LnUp1xVsUvPMwbc7vOZ",
-    "breast_classes.json": "1R0uAhH2p2rmuF37937kh8VUkod05EJOd",
-    "brain_model.h5":      "1nb5MB69E_bK2MSuLeRtFTcDXfoZIliKW",
-    "brain_classes.json":  "1oxfQMkCBiMK-zemXZ2TffA261PZ4L-nO",
+    "skin_model.keras":     "1g5jgRfc36q04a5dzkeVapcxVANHkH9iq",
+    "pneumonia_model.keras":"1LS5POpqwORzaMk33nNWaPsPzX-wn0Oku",
+    "breast_model.keras":   "1DRkfkvSwHp5ZUqSvQdz9Ko-xsS3Q0wkn",
+    "brain_model.keras":    "1HFnHKMIfR1e06Nb64MfrXFGpr9nlrwwb",
+    "heart_scaler.pkl":     "1SN9cjfItVbiGO6WEkohVoqlfcq-oV_Ub",
+    "heart_model.pkl":      "1KL1m745h1wFlAL-GBvpQvBsPh3gQV_Ci",
+    "breast_classes.json":  "1R0uAhH2p2rmuF37937kh8VUkod05EJOd",
+    "brain_classes.json":   "1oxfQMkCBiMK-zemXZ2TffA261PZ4L-nO",
 }
 
 def download_file(file_id, dest_path):
@@ -78,14 +78,6 @@ def _load_keras(name):
         m = tf.keras.models.load_model(path, compile=False)
         print(f"Loaded: {name}")
         return m
-    except Exception:
-        pass
-    try:
-        import h5py
-        with h5py.File(path, 'r') as f:
-            m = tf.keras.models.load_model(f, compile=False)
-        print(f"Loaded (h5py): {name}")
-        return m
     except Exception as e:
         print(f"Load failed {name}: {e}")
         return None
@@ -103,10 +95,10 @@ def _load_pickle(name):
 
 # Load all models
 LOADED_MODELS = {
-    "pneumonia": _load_keras("pneumonia_model.h5"),
-    "brain":     _load_keras("brain_model.h5"),
-    "skin":      _load_keras("skin_model.h5"),
-    "breast":    _load_keras("breast_model.h5"),
+    "pneumonia": _load_keras("pneumonia_model.keras"),
+    "brain":     _load_keras("brain_model.keras"),
+    "skin":      _load_keras("skin_model.keras"),
+    "breast":    _load_keras("breast_model.keras"),
     "heart":     _load_pickle("heart_model.pkl"),
     "scaler":    _load_pickle("heart_scaler.pkl"),
 }
