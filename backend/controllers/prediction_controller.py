@@ -19,13 +19,45 @@ try:
 except ImportError:
     pickle = None
 
-# ── Load models once at startup ───────────────────────────────────────────────
 BASE       = os.path.join(os.path.dirname(__file__), "..", "ml_models")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# ── Lazy model loading ────────────────────────────────────────────────────────
+_models = {}
+
+def get_keras(name):
+    if name not in _models:
+        path = os.path.join(BASE, name)
+        if tf and os.path.exists(path) and os.path.getsize(path) > 1024:
+            try:
+                _models[name] = tf.keras.models.load_model(path)
+                print(f"Loaded: {name}")
+            except Exception as e:
+                print(f"Failed to load {name}: {e}")
+                _models[name] = None
+        else:
+            print(f"Model not ready: {name}")
+            _models[name] = None
+    return _models[name]
+
+def get_pickle(name):
+    if name not in _models:
+        path = os.path.join(BASE, name)
+        if pickle and os.path.exists(path) and os.path.getsize(path) > 100:
+            try:
+                _models[name] = pickle.load(open(path, "rb"))
+                print(f"Loaded: {name}")
+            except Exception as e:
+                print(f"Failed to load {name}: {e}")
+                _models[name] = None
+        else:
+            print(f"Model not ready: {name}")
+            _models[name] = None
+    return _models[name]
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
 def _save_image(image_file, prefix):
-    """Save uploaded image and return relative path"""
     try:
         image_file.seek(0)
         ext      = os.path.splitext(image_file.filename)[-1] or ".png"
@@ -39,26 +71,6 @@ def _save_image(image_file, prefix):
     except Exception:
         return None
 
-def load_keras(name):
-    path = os.path.join(BASE, name)
-    if tf and os.path.exists(path):
-        return tf.keras.models.load_model(path)
-    return None
-
-def load_pickle(name):
-    path = os.path.join(BASE, name)
-    if pickle and os.path.exists(path):
-        return pickle.load(open(path, "rb"))
-    return None
-
-pneumonia_model = load_keras("pneumonia_model.h5")
-brain_model     = load_keras("brain_model.h5")
-skin_model      = load_keras("skin_model.h5")
-breast_model    = load_keras("breast_model.h5")
-heart_model     = load_pickle("heart_model.pkl")
-heart_scaler    = load_pickle("heart_scaler.pkl")
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 def _get_patient_id(user_id):
     p = Patient.query.filter_by(user_id=user_id).first()
     return p.id if p else None
@@ -83,7 +95,6 @@ def _save(patient_id, doctor_id, disease_type, result, confidence, risk_score, r
     return pred
 
 def _quick_response(disease, result, confidence=None, risk_score=None, recommendation=""):
-    """Return result without saving to DB — used when no patient profile exists"""
     return jsonify({
         "disease":        disease,
         "disease_type":   disease,
@@ -96,15 +107,15 @@ def _quick_response(disease, result, confidence=None, risk_score=None, recommend
 
 # ── Heart Disease ─────────────────────────────────────────────────────────────
 def predict_heart():
-    user_id    = get_jwt_identity()
-    claims     = get_jwt()
-    role       = claims.get("role", "patient")
-    data       = request.get_json()
+    user_id   = get_jwt_identity()
+    claims    = get_jwt()
+    role      = claims.get("role", "patient")
+    data      = request.get_json()
 
-    cp_map     = {"Typical Angina": 0, "Atypical Angina": 1, "Non-anginal": 2, "Asymptomatic": 3}
-    ecg_map    = {"Normal": 0, "ST-T Wave Abnormality": 1, "Left Ventricular Hypertrophy": 2}
-    slope_map  = {"upsloping": 0, "flat": 1, "downsloping": 2}
-    thal_map   = {"normal": 0, "fixed defect": 1, "reversable defect": 2}
+    cp_map    = {"Typical Angina": 0, "Atypical Angina": 1, "Non-anginal": 2, "Asymptomatic": 3}
+    ecg_map   = {"Normal": 0, "ST-T Wave Abnormality": 1, "Left Ventricular Hypertrophy": 2}
+    slope_map = {"upsloping": 0, "flat": 1, "downsloping": 2}
+    thal_map  = {"normal": 0, "fixed defect": 1, "reversable defect": 2}
 
     features = np.array([[
         float(data.get("age", 50)),
@@ -112,15 +123,18 @@ def predict_heart():
         cp_map.get(data.get("chestPain", "Asymptomatic"), 3),
         float(data.get("bp", 120)),
         float(data.get("cholesterol", 200)),
-        1 if data.get("bloodSugar", "No") == "Yes" else 0,       # default No
-        ecg_map.get(data.get("restingECG", "Normal"), 0),        # default Normal
+        1 if data.get("bloodSugar", "No") == "Yes" else 0,
+        ecg_map.get(data.get("restingECG", "Normal"), 0),
         float(data.get("maxHR", 150)),
-        1 if data.get("exerciseAngina", "No") == "Yes" else 0,   # default No
-        float(data.get("oldpeak", 1.0)),                          # default avg
-        slope_map.get(data.get("slope", "flat"), 1),             # default flat
-        float(data.get("majorVessels", 0)),                       # default 0
-        thal_map.get(data.get("thal", "normal"), 0),             # default normal
+        1 if data.get("exerciseAngina", "No") == "Yes" else 0,
+        float(data.get("oldpeak", 1.0)),
+        slope_map.get(data.get("slope", "flat"), 1),
+        float(data.get("majorVessels", 0)),
+        thal_map.get(data.get("thal", "normal"), 0),
     ]])
+
+    heart_scaler = get_pickle("heart_scaler.pkl")
+    heart_model  = get_pickle("heart_model.pkl")
 
     if heart_scaler:
         features = heart_scaler.transform(features)
@@ -129,7 +143,6 @@ def predict_heart():
     result     = "High Risk" if risk_score > 50 else "Low Risk"
     rec        = "Cardiac evaluation recommended." if result == "High Risk" else "Low risk. Maintain healthy lifestyle."
 
-    # Try to save — if no patient profile, just return result
     patient_id = data.get("patient_id") or _get_patient_id(user_id)
     doctor_id  = user_id if role == "doctor" else None
 
@@ -149,7 +162,8 @@ def predict_pneumonia():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    img = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
+    pneumonia_model = get_keras("pneumonia_model.h5")
+    img        = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
     raw        = float(pneumonia_model.predict(img)[0][0]) if pneumonia_model else 0.87
     confidence = round(raw * 100, 2)
     result     = "Positive" if raw > 0.5 else "Negative"
@@ -177,6 +191,7 @@ def predict_brain():
         return jsonify({"error": "Image required"}), 400
 
     import json
+    brain_model = get_keras("brain_model.h5")
     img = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
 
     if brain_model:
@@ -186,29 +201,24 @@ def predict_brain():
                 class_indices = json.load(f)
             idx_to_class = {v: k for k, v in class_indices.items()}
         else:
-            idx_to_class = {0: "glioma", 1: "meningioma", 2: "notumor", 3: "pituitary"}
+            idx_to_class = {0: "glioma_tumor", 1: "meningioma_tumor", 2: "no_tumor", 3: "pituitary_tumor"}
 
         preds      = brain_model.predict(img)[0]
         class_idx  = int(np.argmax(preds))
         confidence = round(float(np.max(preds)) * 100, 2)
-        result_raw = idx_to_class[class_idx]  # e.g. "glioma_tumor"
-        if result_raw == "no_tumor":         result = "No Tumor"
-        elif result_raw == "glioma_tumor":   result = "Glioma"
-        elif result_raw == "meningioma_tumor": result = "Meningioma"
-        elif result_raw == "pituitary_tumor":  result = "Pituitary"
+        result_raw = idx_to_class.get(class_idx, "unknown")
+        if result_raw == "no_tumor":            result = "No Tumor"
+        elif result_raw == "glioma_tumor":      result = "Glioma"
+        elif result_raw == "meningioma_tumor":  result = "Meningioma"
+        elif result_raw == "pituitary_tumor":   result = "Pituitary"
         else: result = result_raw.replace("_", " ").title()
     else:
-        result     = "Glioma"
-        confidence = 92.0
+        result, confidence = "Glioma", 92.0
 
-    if result == "No Tumor":
-        rec = "No tumor detected. Routine checkup advised."
-    elif result == "Glioma":
-        rec = "Glioma detected. Urgent neurosurgical consultation required."
-    elif result == "Meningioma":
-        rec = "Meningioma detected. Neurology referral recommended."
-    else:
-        rec = "Pituitary tumor detected. Endocrinology and neurosurgery consultation advised."
+    if result == "No Tumor":      rec = "No tumor detected. Routine checkup advised."
+    elif result == "Glioma":      rec = "Glioma detected. Urgent neurosurgical consultation required."
+    elif result == "Meningioma":  rec = "Meningioma detected. Neurology referral recommended."
+    else:                         rec = "Pituitary tumor detected. Endocrinology and neurosurgery consultation advised."
 
     patient_id = request.form.get("patient_id") or _get_patient_id(user_id)
     doctor_id  = user_id if role == "doctor" else None
@@ -230,7 +240,8 @@ def predict_skin():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    img = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
+    skin_model = get_keras("skin_model.h5")
+    img        = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
     raw        = float(skin_model.predict(img)[0][0]) if skin_model else 0.89
     confidence = round(raw * 100, 2)
     result     = "Melanoma Detected" if raw > 0.5 else "Benign"
@@ -256,21 +267,20 @@ def predict_breast():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    img        = preprocess_image(image_file, target_size=(224, 224))
+    import json
+    breast_model = get_keras("breast_model.h5")
+    img          = preprocess_image(image_file, target_size=(224, 224))
 
     if breast_model:
-        import json
         classes_path = os.path.join(BASE, "breast_classes.json")
         with open(classes_path) as f:
-            class_indices = json.load(f)  # {"benign": 0, "malignant": 1, "normal": 2}
+            class_indices = json.load(f)
         idx_to_class = {v: k.capitalize() for k, v in class_indices.items()}
 
         preds      = breast_model.predict(img)[0]
         class_idx  = int(np.argmax(preds))
         confidence = round(float(np.max(preds)) * 100, 2)
 
-        # Bias correction: if benign vs malignant scores are close (within 15%),
-        # prefer benign to avoid false positives
         benign_idx    = class_indices.get("benign", 0)
         malignant_idx = class_indices.get("malignant", 1)
         if class_idx == malignant_idx and abs(float(preds[malignant_idx]) - float(preds[benign_idx])) < 0.30:
@@ -279,15 +289,11 @@ def predict_breast():
 
         result = idx_to_class[class_idx]
     else:
-        result     = "Malignant"
-        confidence = 91.7
+        result, confidence = "Malignant", 91.7
 
-    if result == "Malignant":
-        rec = "Urgent oncology consultation required. Further biopsy and imaging needed."
-    elif result == "Benign":
-        rec = "Benign finding. Regular follow-up and monitoring advised."
-    else:
-        rec = "No abnormality detected. Routine annual screening recommended."
+    if result == "Malignant":   rec = "Urgent oncology consultation required. Further biopsy and imaging needed."
+    elif result == "Benign":    rec = "Benign finding. Regular follow-up and monitoring advised."
+    else:                       rec = "No abnormality detected. Routine annual screening recommended."
 
     patient_id = request.form.get("patient_id") or _get_patient_id(user_id)
     doctor_id  = user_id if role == "doctor" else None
