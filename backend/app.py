@@ -5,6 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 import os
+import requests
 
 from config.db import db
 from routes.auth_routes import auth_bp
@@ -15,6 +16,54 @@ from routes.report_routes import report_bp
 
 load_dotenv()
 
+# ── Download ML models from Google Drive if not present ──────────────────────
+ML_DIR = os.path.join(os.path.dirname(__file__), "ml_models")
+os.makedirs(ML_DIR, exist_ok=True)
+
+MODELS = {
+    "skin_model.h5":       "12Yg7X57BGaPBoTABeD_7UYv7JsrJoaxI",
+    "pneumonia_model.h5":  "1Kg8DC7WR36wxioYRsvg5K6wB-QQoJ7Nh",
+    "heart_scaler.pkl":    "1SN9cjfItVbiGO6WEkohVoqlfcq-oV_Ub",
+    "heart_model.pkl":     "1KL1m745h1wFlAL-GBvpQvBsPh3gQV_Ci",
+    "breast_model.h5":     "1vyt7OmEprrcv7LnUp1xVsUvPMwbc7vOZ",
+    "breast_classes.json": "1R0uAhH2p2rmuF37937kh8VUkod05EJOd",
+    "brain_model.h5":      "1nb5MB69E_bK2MSuLeRtFTcDXfoZIliKW",
+    "brain_classes.json":  "1oxfQMkCBiMK-zemXZ2TffA261PZ4L-nO",
+}
+
+def download_file(file_id, dest_path):
+    print(f"Downloading {os.path.basename(dest_path)}...")
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    session = requests.Session()
+    response = session.get(url, stream=True)
+
+    # Handle Google Drive large file warning page
+    token = None
+    for key, value in response.cookies.items():
+        if key.startswith("download_warning"):
+            token = value
+            break
+
+    if token:
+        response = session.get(url, params={"confirm": token}, stream=True)
+
+    with open(dest_path, "wb") as f:
+        for chunk in response.iter_content(chunk_size=32768):
+            if chunk:
+                f.write(chunk)
+    print(f"Downloaded {os.path.basename(dest_path)}")
+
+for filename, file_id in MODELS.items():
+    dest = os.path.join(ML_DIR, filename)
+    if not os.path.exists(dest):
+        try:
+            download_file(file_id, dest)
+        except Exception as e:
+            print(f"Failed to download {filename}: {e}")
+    else:
+        print(f"Already exists: {filename}")
+
+# ── App setup ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
