@@ -19,13 +19,34 @@ BASE       = os.path.join(os.path.dirname(__file__), "..", "ml_models")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# These are injected from app.py after models are loaded
+# Injected from app.py
 pneumonia_model = None
 brain_model     = None
 skin_model      = None
 breast_model    = None
 heart_model     = None
 heart_scaler    = None
+
+def _predict(model, img):
+    """Works for both Keras model and tf.saved_model"""
+    import tensorflow as tf
+    if model is None:
+        return None
+    try:
+        # Try Keras-style predict first
+        return model.predict(img)
+    except Exception:
+        pass
+    try:
+        # SavedModel style
+        infer = model.signatures["serving_default"]
+        input_key = list(infer.structured_input_signature[1].keys())[0]
+        result = infer(**{input_key: tf.constant(img, dtype=tf.float32)})
+        output_key = list(result.keys())[0]
+        return result[output_key].numpy()
+    except Exception as e:
+        print(f"_predict failed: {e}")
+        return None
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _save_image(image_file, prefix):
@@ -118,8 +139,9 @@ def predict_pneumonia():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    img        = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
-    raw        = float(pneumonia_model.predict(img)[0][0]) if pneumonia_model else 0.87
+    img    = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
+    preds  = _predict(pneumonia_model, img)
+    raw    = float(preds[0][0]) if preds is not None else 0.87
     confidence = round(raw * 100, 2)
     result     = "Positive" if raw > 0.5 else "Negative"
     rec        = "Consult pulmonologist immediately." if result == "Positive" else "No pneumonia detected. Routine checkup advised."
@@ -142,7 +164,8 @@ def predict_brain():
     import json
     img = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
 
-    if brain_model:
+    preds_raw = _predict(brain_model, img)
+    if preds_raw is not None:
         classes_path = os.path.join(BASE, "brain_classes.json")
         if os.path.exists(classes_path):
             with open(classes_path) as f:
@@ -151,7 +174,7 @@ def predict_brain():
         else:
             idx_to_class = {0: "glioma_tumor", 1: "meningioma_tumor", 2: "no_tumor", 3: "pituitary_tumor"}
 
-        preds      = brain_model.predict(img)[0]
+        preds      = preds_raw[0]
         class_idx  = int(np.argmax(preds))
         confidence = round(float(np.max(preds)) * 100, 2)
         raw        = idx_to_class.get(class_idx, "unknown")
@@ -183,8 +206,9 @@ def predict_skin():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    img        = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
-    raw        = float(skin_model.predict(img)[0][0]) if skin_model else 0.89
+    img    = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
+    preds  = _predict(skin_model, img)
+    raw    = float(preds[0][0]) if preds is not None else 0.89
     confidence = round(raw * 100, 2)
     result     = "Melanoma Detected" if raw > 0.5 else "Benign"
     rec        = "Immediate dermatology referral required." if "Melanoma" in result else "Benign lesion. Monitor for changes."
@@ -205,14 +229,15 @@ def predict_breast():
         return jsonify({"error": "Image required"}), 400
 
     import json
-    img = preprocess_image(image_file, target_size=(224, 224))
+    img       = preprocess_image(image_file, target_size=(224, 224))
+    preds_raw = _predict(breast_model, img)
 
-    if breast_model:
+    if preds_raw is not None:
         classes_path = os.path.join(BASE, "breast_classes.json")
         with open(classes_path) as f:
             class_indices = json.load(f)
         idx_to_class  = {v: k.capitalize() for k, v in class_indices.items()}
-        preds         = breast_model.predict(img)[0]
+        preds         = preds_raw[0]
         class_idx     = int(np.argmax(preds))
         confidence    = round(float(np.max(preds)) * 100, 2)
         benign_idx    = class_indices.get("benign", 0)

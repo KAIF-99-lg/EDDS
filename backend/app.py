@@ -14,14 +14,17 @@ ML_DIR = os.path.join(os.path.dirname(__file__), "ml_models")
 os.makedirs(ML_DIR, exist_ok=True)
 
 MODELS = {
-    "skin_model.keras":     "1g5jgRfc36q04a5dzkeVapcxVANHkH9iq",
-    "pneumonia_model.keras":"1LS5POpqwORzaMk33nNWaPsPzX-wn0Oku",
-    "breast_model.keras":   "1DRkfkvSwHp5ZUqSvQdz9Ko-xsS3Q0wkn",
-    "brain_model.keras":    "1HFnHKMIfR1e06Nb64MfrXFGpr9nlrwwb",
-    "heart_scaler.pkl":     "1SN9cjfItVbiGO6WEkohVoqlfcq-oV_Ub",
-    "heart_model.pkl":      "1KL1m745h1wFlAL-GBvpQvBsPh3gQV_Ci",
-    "breast_classes.json":  "1R0uAhH2p2rmuF37937kh8VUkod05EJOd",
-    "brain_classes.json":   "1oxfQMkCBiMK-zemXZ2TffA261PZ4L-nO",
+    # SavedModel zips (folders)
+    "brain_model_saved.zip":     "1PpYxO-QlUmK2FCAXFnnvSB370QAwGnao",
+    "breast_model_saved.zip":    "1XsMBAq3AVPHExSrMdZzr9BNa0fLCkx18",
+    "pneumonia_model_saved.zip": "155IpfoltHsrOv9NOk_WHZudChSmPTK4E",
+    "skin_model_saved.zip":      "1Q8K_qt-iBXWmZ7Vb8FekiVNLASjsDoqK",
+    # Pickle files
+    "heart_scaler.pkl":          "1SN9cjfItVbiGO6WEkohVoqlfcq-oV_Ub",
+    "heart_model.pkl":           "1KL1m745h1wFlAL-GBvpQvBsPh3gQV_Ci",
+    # JSON files
+    "breast_classes.json":       "1R0uAhH2p2rmuF37937kh8VUkod05EJOd",
+    "brain_classes.json":        "1oxfQMkCBiMK-zemXZ2TffA261PZ4L-nO",
 }
 
 def download_file(file_id, dest_path):
@@ -32,9 +35,34 @@ def download_file(file_id, dest_path):
         raise Exception("Download failed - file empty")
     print(f"Done: {os.path.basename(dest_path)} ({os.path.getsize(dest_path)/1024/1024:.2f} MB)")
 
+import zipfile
+
 force = os.getenv("FORCE_MODEL_DOWNLOAD") == "1"
 for filename, file_id in MODELS.items():
     dest = os.path.join(ML_DIR, filename)
+
+    # For zip files: check if extracted folder exists
+    if filename.endswith(".zip"):
+        folder_name = filename.replace(".zip", "")
+        folder_path = os.path.join(ML_DIR, folder_name)
+        if force and os.path.exists(folder_path):
+            import shutil
+            shutil.rmtree(folder_path)
+        if not os.path.exists(folder_path):
+            try:
+                download_file(file_id, dest)
+                print(f"Extracting {filename}...")
+                with zipfile.ZipFile(dest, 'r') as z:
+                    z.extractall(ML_DIR)
+                os.remove(dest)
+                print(f"Extracted {folder_name}/")
+            except Exception as e:
+                print(f"Failed: {filename} - {e}")
+        else:
+            print(f"Exists: {folder_name}/")
+        continue
+
+    # For regular files
     if force and os.path.exists(dest):
         os.remove(dest)
     if not os.path.exists(dest):
@@ -44,10 +72,8 @@ for filename, file_id in MODELS.items():
             print(f"Failed: {filename} - {e}")
     else:
         size = os.path.getsize(dest)
-        # Re-download .h5 and .pkl if suspiciously small
-        if filename.endswith((".h5", ".pkl")) and size < 10000:
+        if filename.endswith((".pkl",)) and size < 100:
             os.remove(dest)
-            print(f"Re-downloading {filename} (was {size} bytes)")
             try:
                 download_file(file_id, dest)
             except Exception as e:
@@ -71,11 +97,13 @@ except Exception:
     PKL_OK = False
 
 def _load_keras(name):
+    # name is the folder name e.g. "brain_model_saved"
     path = os.path.join(ML_DIR, name)
-    if not (TF_OK and os.path.exists(path) and os.path.getsize(path) > 10000):
+    if not (TF_OK and os.path.exists(path)):
+        print(f"Model not found: {name}")
         return None
     try:
-        m = tf.keras.models.load_model(path, compile=False)
+        m = tf.saved_model.load(path)
         print(f"Loaded: {name}")
         return m
     except Exception as e:
@@ -95,10 +123,10 @@ def _load_pickle(name):
 
 # Load all models
 LOADED_MODELS = {
-    "pneumonia": _load_keras("pneumonia_model.keras"),
-    "brain":     _load_keras("brain_model.keras"),
-    "skin":      _load_keras("skin_model.keras"),
-    "breast":    _load_keras("breast_model.keras"),
+    "pneumonia": _load_keras("pneumonia_model_saved"),
+    "brain":     _load_keras("brain_model_saved"),
+    "skin":      _load_keras("skin_model_saved"),
+    "breast":    _load_keras("breast_model_saved"),
     "heart":     _load_pickle("heart_model.pkl"),
     "scaler":    _load_pickle("heart_scaler.pkl"),
 }
