@@ -43,7 +43,17 @@ for filename, file_id in MODELS.items():
         except Exception as e:
             print(f"Failed: {filename} - {e}")
     else:
-        print(f"Exists: {filename} ({os.path.getsize(dest)/1024/1024:.1f} MB)")
+        size = os.path.getsize(dest)
+        # Re-download .h5 and .pkl if suspiciously small
+        if filename.endswith((".h5", ".pkl")) and size < 10000:
+            os.remove(dest)
+            print(f"Re-downloading {filename} (was {size} bytes)")
+            try:
+                download_file(file_id, dest)
+            except Exception as e:
+                print(f"Failed: {filename} - {e}")
+        else:
+            print(f"Exists: {filename} ({size/1024/1024:.1f} MB)")
 
 # ── Load ML models into memory NOW (before any import of prediction_controller)
 try:
