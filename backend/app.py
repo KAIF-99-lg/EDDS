@@ -74,10 +74,11 @@ def download_file(file_id, dest_path):
 
 for filename, file_id in MODELS.items():
     dest = os.path.join(ML_DIR, filename)
-    # Re-download if file doesn't exist or is too small (corrupted/HTML page)
-    if os.path.exists(dest) and os.path.getsize(dest) < 1024:
+    force = os.getenv("FORCE_MODEL_DOWNLOAD") == "1"
+    # Re-download if file doesn't exist, too small, or force flag set
+    if os.path.exists(dest) and (os.path.getsize(dest) < 1024 or force):
         os.remove(dest)
-        print(f"Removing corrupted {filename}")
+        print(f"Removing {filename} for re-download")
     if not os.path.exists(dest):
         try:
             download_file(file_id, dest)
