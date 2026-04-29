@@ -7,16 +7,9 @@ from dotenv import load_dotenv
 import os
 import gdown
 
-from config.db import db
-from routes.auth_routes import auth_bp
-from routes.patient_routes import patient_bp
-from routes.doctor_routes import doctor_bp
-from routes.prediction_routes import prediction_bp
-from routes.report_routes import report_bp
-
 load_dotenv()
 
-# ── Download ML models from Google Drive if not present ──────────────────────
+# ── Download ML models ────────────────────────────────────────────────────────
 ML_DIR = os.path.join(os.path.dirname(__file__), "ml_models")
 os.makedirs(ML_DIR, exist_ok=True)
 
@@ -36,26 +29,86 @@ def download_file(file_id, dest_path):
     url = f"https://drive.google.com/uc?id={file_id}"
     gdown.download(url, dest_path, quiet=False, fuzzy=True)
     if not os.path.exists(dest_path) or os.path.getsize(dest_path) == 0:
-        raise Exception(f"Download failed - file empty or missing")
-    size = os.path.getsize(dest_path)
-    print(f"Downloaded {os.path.basename(dest_path)} ({size/(1024*1024):.2f} MB)")
+        raise Exception("Download failed - file empty")
+    print(f"Done: {os.path.basename(dest_path)} ({os.path.getsize(dest_path)/1024/1024:.2f} MB)")
 
+force = os.getenv("FORCE_MODEL_DOWNLOAD") == "1"
 for filename, file_id in MODELS.items():
     dest = os.path.join(ML_DIR, filename)
-    force = os.getenv("FORCE_MODEL_DOWNLOAD") == "1"
-    # Re-download if file doesn't exist, too small, or force flag set
-    if os.path.exists(dest) and (os.path.getsize(dest) < 1024 or force):
+    if force and os.path.exists(dest):
         os.remove(dest)
-        print(f"Removing {filename} for re-download")
     if not os.path.exists(dest):
         try:
             download_file(file_id, dest)
         except Exception as e:
-            print(f"Failed to download {filename}: {e}")
+            print(f"Failed: {filename} - {e}")
     else:
-        print(f"Already exists: {filename} ({os.path.getsize(dest)/(1024*1024):.1f} MB)")
+        print(f"Exists: {filename} ({os.path.getsize(dest)/1024/1024:.1f} MB)")
 
-# ── App setup ─────────────────────────────────────────────────────────────────
+# ── Load ML models into memory NOW (before any import of prediction_controller)
+try:
+    import tensorflow as tf
+    TF_OK = True
+except Exception:
+    tf = None
+    TF_OK = False
+
+try:
+    import pickle
+    PKL_OK = True
+except Exception:
+    pickle = None
+    PKL_OK = False
+
+def _load_keras(name):
+    path = os.path.join(ML_DIR, name)
+    if TF_OK and os.path.exists(path) and os.path.getsize(path) > 10000:
+        try:
+            m = tf.keras.models.load_model(path)
+            print(f"Loaded: {name}")
+            return m
+        except Exception as e:
+            print(f"Load failed {name}: {e}")
+    return None
+
+def _load_pickle(name):
+    path = os.path.join(ML_DIR, name)
+    if PKL_OK and os.path.exists(path) and os.path.getsize(path) > 100:
+        try:
+            m = pickle.load(open(path, "rb"))
+            print(f"Loaded: {name}")
+            return m
+        except Exception as e:
+            print(f"Load failed {name}: {e}")
+    return None
+
+# Load all models
+LOADED_MODELS = {
+    "pneumonia": _load_keras("pneumonia_model.h5"),
+    "brain":     _load_keras("brain_model.h5"),
+    "skin":      _load_keras("skin_model.h5"),
+    "breast":    _load_keras("breast_model.h5"),
+    "heart":     _load_pickle("heart_model.pkl"),
+    "scaler":    _load_pickle("heart_scaler.pkl"),
+}
+
+# ── Inject models into prediction controller BEFORE importing routes ──────────
+import controllers.prediction_controller as pc
+pc.pneumonia_model = LOADED_MODELS["pneumonia"]
+pc.brain_model     = LOADED_MODELS["brain"]
+pc.skin_model      = LOADED_MODELS["skin"]
+pc.breast_model    = LOADED_MODELS["breast"]
+pc.heart_model     = LOADED_MODELS["heart"]
+pc.heart_scaler    = LOADED_MODELS["scaler"]
+
+# ── Flask app ─────────────────────────────────────────────────────────────────
+from config.db import db
+from routes.auth_routes import auth_bp
+from routes.patient_routes import patient_bp
+from routes.doctor_routes import doctor_bp
+from routes.prediction_routes import prediction_bp
+from routes.report_routes import report_bp
+
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
@@ -78,20 +131,18 @@ CORS(app, resources={r"/api/*": {
 }})
 
 limiter = Limiter(
-    get_remote_address,
-    app=app,
+    get_remote_address, app=app,
     default_limits=["200 per minute"],
     storage_uri="memory://",
 )
 
-# Serve uploaded images
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.route("/uploads/<path:filename>")
 def serve_upload(filename):
     response = send_from_directory(UPLOAD_DIR, filename)
-    response.headers["Access-Control-Allow-Origin"] = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     return response
 
