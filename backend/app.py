@@ -5,7 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 import os
-import requests
+import gdown
 
 from config.db import db
 from routes.auth_routes import auth_bp
@@ -33,44 +33,13 @@ MODELS = {
 
 def download_file(file_id, dest_path):
     print(f"Downloading {os.path.basename(dest_path)}...")
-    session = requests.Session()
-
-    # Step 1: Initial request
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = session.get(url, stream=True)
-
-    # Step 2: Handle virus scan warning for large files
-    token = None
-    for key, value in response.cookies.items():
-        if key.startswith("download_warning"):
-            token = value
-            break
-
-    # Also check response content for confirmation token
-    if not token and b"confirm=" in response.content[:2048]:
-        import re
-        match = re.search(rb"confirm=([0-9A-Za-z_]+)", response.content[:2048])
-        if match:
-            token = match.group(1).decode()
-
-    if token:
-        response = session.get(url, params={"confirm": token, "id": file_id}, stream=True)
-
-    # Step 3: Write file
-    total = 0
-    with open(dest_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=65536):
-            if chunk:
-                f.write(chunk)
-                total += len(chunk)
-
-    size_mb = total / (1024 * 1024)
-    print(f"Downloaded {os.path.basename(dest_path)} ({size_mb:.1f} MB)")
-
-    # If file is too small it's likely an error page, delete it
-    if total < 1024:
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, dest_path, quiet=False, fuzzy=True)
+    size = os.path.getsize(dest_path)
+    if size < 1024:
         os.remove(dest_path)
-        raise Exception(f"Download failed - got {total} bytes (likely HTML error page)")
+        raise Exception(f"Download failed - got {size} bytes")
+    print(f"Downloaded {os.path.basename(dest_path)} ({size/(1024*1024):.1f} MB)")
 
 for filename, file_id in MODELS.items():
     dest = os.path.join(ML_DIR, filename)
