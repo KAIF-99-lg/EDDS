@@ -36,7 +36,7 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 db.init_app(app)
 JWTManager(app)
 
-CORS(app, resources={r"/api/*": {
+CORS(app, supports_credentials=True, resources={r"/*": {
     "origins": "*",
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
