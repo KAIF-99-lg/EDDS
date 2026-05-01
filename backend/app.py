@@ -4,7 +4,10 @@ from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-import os, zipfile, threading
+import os, zipfile, threading, logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -93,16 +96,20 @@ def _setup_models():
             if filename.endswith(".zip"):
                 folder = os.path.join(ML_DIR, filename.replace(".zip", ""))
                 if not os.path.exists(folder):
-                    print(f"Downloading {filename}...")
+                    logger.info(f"Downloading {filename}...")
                     gdown.download(f"https://drive.google.com/uc?id={file_id}", dest, quiet=False, fuzzy=True)
                     with zipfile.ZipFile(dest, "r") as z:
                         z.extractall(ML_DIR)
                     os.remove(dest)
-                    print(f"Extracted {filename}")
+                    logger.info(f"Extracted {filename}")
+                else:
+                    logger.info(f"Exists: {folder}")
             else:
                 if not os.path.exists(dest) or os.path.getsize(dest) < 100:
-                    print(f"Downloading {filename}...")
+                    logger.info(f"Downloading {filename}...")
                     gdown.download(f"https://drive.google.com/uc?id={file_id}", dest, quiet=False, fuzzy=True)
+                else:
+                    logger.info(f"Exists: {filename}")
 
         import pickle
         import tensorflow as tf
@@ -112,11 +119,14 @@ def _setup_models():
             path = os.path.join(ML_DIR, name)
             if os.path.exists(path):
                 try:
+                    logger.info(f"Loading {name}...")
                     m = tf.keras.models.load_model(path)
-                    print(f"Loaded: {name}")
+                    logger.info(f"Loaded: {name}")
                     return m
                 except Exception as e:
-                    print(f"Load failed {name}: {e}")
+                    logger.error(f"Load failed {name}: {e}")
+            else:
+                logger.error(f"Not found: {path}")
             return None
 
         def load_pickle(name):
@@ -125,7 +135,7 @@ def _setup_models():
                 try:
                     return pickle.load(open(path, "rb"))
                 except Exception as e:
-                    print(f"Load failed {name}: {e}")
+                    logger.error(f"Load failed {name}: {e}")
             return None
 
         pc.pneumonia_model = load_keras("pneumonia_model_saved")
@@ -136,10 +146,10 @@ def _setup_models():
         pc.heart_scaler    = load_pickle("heart_scaler.pkl")
 
         _models_ready = True
-        print("✅ All models loaded!")
+        logger.info("✅ All models loaded!")
 
     except Exception as e:
-        print(f"Model setup failed: {e}")
+        logger.error(f"Model setup failed: {e}")
 
 threading.Thread(target=_setup_models, daemon=True).start()
 
