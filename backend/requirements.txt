@@ -13,4 +13,4 @@ numpy==1.26.2
 pillow==10.1.0
 gunicorn==21.2.0
 flask-limiter==3.5.0
-gdown==5.1.0
+huggingface_hub==0.23.0

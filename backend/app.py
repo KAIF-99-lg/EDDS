@@ -4,7 +4,7 @@ from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-import os, zipfile, logging
+import os, logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,41 +16,37 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(ML_DIR,     exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-MODELS = {
-    "brain_model_saved.zip":     "1PpYxO-QlUmK2FCAXFnnvSB370QAwGnao",
-    "breast_model_saved.zip":    "1XsMBAq3AVPHExSrMdZzr9BNa0fLCkx18",
-    "pneumonia_model_saved.zip": "155IpfoltHsrOv9NOk_WHZudChSmPTK4E",
-    "skin_model_saved.zip":      "1Q8K_qt-iBXWmZ7Vb8FekiVNLASjsDoqK",
-    "heart_scaler.pkl":          "1SN9cjfItVbiGO6WEkohVoqlfcq-oV_Ub",
-    "heart_model.pkl":           "1KL1m745h1wFlAL-GBvpQvBsPh3gQV_Ci",
-    "breast_classes.json":       "1R0uAhH2p2rmuF37937kh8VUkod05EJOd",
-    "brain_classes.json":        "1oxfQMkCBiMK-zemXZ2TffA261PZ4L-nO",
-}
+# ── Download models from HF Model Hub ────────────────────────────────────────
+HF_REPO = "kqif235/medai-backend"
 
-# ── Download models ───────────────────────────────────────────────────────────
+HF_FILES = [
+    "brain_model.h5",
+    "breast_model.h5",
+    "pneumonia_model.h5",
+    "skin_model.h5",
+    "heart_model.pkl",
+    "heart_scaler.pkl",
+    "breast_classes.json",
+    "brain_classes.json",
+]
+
 try:
-    import gdown
-    for filename, file_id in MODELS.items():
+    from huggingface_hub import hf_hub_download
+    for filename in HF_FILES:
         dest = os.path.join(ML_DIR, filename)
-        if filename.endswith(".zip"):
-            folder = os.path.join(ML_DIR, filename.replace(".zip", ""))
-            if not os.path.exists(folder):
-                logger.info(f"Downloading {filename}...")
-                gdown.download(f"https://drive.google.com/uc?id={file_id}", dest, quiet=False, fuzzy=True)
-                with zipfile.ZipFile(dest, "r") as z:
-                    z.extractall(ML_DIR)
-                os.remove(dest)
-                logger.info(f"Extracted {filename}")
-            else:
-                logger.info(f"Already exists: {folder}")
+        if not os.path.exists(dest) or os.path.getsize(dest) < 100:
+            logger.info(f"Downloading {filename} from HF...")
+            hf_hub_download(
+                repo_id=HF_REPO,
+                filename=filename,
+                local_dir=ML_DIR,
+                repo_type="model",
+            )
+            logger.info(f"Downloaded: {filename}")
         else:
-            if not os.path.exists(dest) or os.path.getsize(dest) < 100:
-                logger.info(f"Downloading {filename}...")
-                gdown.download(f"https://drive.google.com/uc?id={file_id}", dest, quiet=False, fuzzy=True)
-            else:
-                logger.info(f"Already exists: {filename}")
+            logger.info(f"Already exists: {filename}")
 except Exception as e:
-    logger.error(f"Download error: {e}")
+    logger.error(f"HF download error: {e}")
 
 # ── Load models ───────────────────────────────────────────────────────────────
 import pickle
@@ -80,10 +76,10 @@ def load_pickle(name):
             logger.error(f"Load failed {name}: {e}")
     return None
 
-pc.pneumonia_model = load_keras("pneumonia_model_saved")
-pc.brain_model     = load_keras("brain_model_saved")
-pc.skin_model      = load_keras("skin_model_saved")
-pc.breast_model    = load_keras("breast_model_saved")
+pc.pneumonia_model = load_keras("pneumonia_model.h5")
+pc.brain_model     = load_keras("brain_model.h5")
+pc.skin_model      = load_keras("skin_model.h5")
+pc.breast_model    = load_keras("breast_model.h5")
 pc.heart_model     = load_pickle("heart_model.pkl")
 pc.heart_scaler    = load_pickle("heart_scaler.pkl")
 logger.info("✅ All models loaded!")
