@@ -171,7 +171,7 @@ const BreastCancerDetection = () => {
               <p className="text-sm text-slate-700 mt-0.5">ResNet50V2 — 85% accuracy on ultrasound images</p>
             </div>
           </Card>
-          <ResultCard result={result} loading={loading} />
+          <ResultCard result={result} loading={loading} imageUrl={previewUrl} />
         </div>
       </div>
     </div>

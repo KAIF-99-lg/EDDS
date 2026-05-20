@@ -146,7 +146,7 @@ const PneumoniaDetection = () => {
               <p className="text-sm text-slate-700 mt-0.5">MobileNetV2 — Chest X-Ray Classification</p>
             </div>
           </Card>
-          <ResultCard result={result} loading={loading} />
+          <ResultCard result={result} loading={loading} imageUrl={previewUrl} />
         </div>
       </div>
     </div>

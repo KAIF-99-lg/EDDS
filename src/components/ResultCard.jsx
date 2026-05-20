@@ -1,8 +1,9 @@
-import { FiCheckCircle, FiAlertCircle, FiAlertTriangle, FiActivity, FiFileText } from "react-icons/fi";
+import { FiCheckCircle, FiAlertCircle, FiAlertTriangle, FiActivity, FiDownload } from "react-icons/fi";
 import Card from "./Card";
 import { formatDateTime } from "../utils/helpers";
+import { generateReportPDF } from "../utils/generateReportPDF";
 
-const ResultCard = ({ result, loading }) => {
+const ResultCard = ({ result, loading, imageUrl }) => {
   if (loading) {
     return (
       <Card className="text-center py-12">
@@ -32,6 +33,11 @@ const ResultCard = ({ result, loading }) => {
 
   return (
     <Card className={`${colors.bg} border ${colors.border} animate-slide-up`}>
+      {imageUrl && (
+        <div className="mb-4 rounded-xl overflow-hidden border border-slate-200">
+          <img src={imageUrl} alt="Analyzed scan" className="w-full h-44 object-cover" />
+        </div>
+      )}
       <div className="flex items-start gap-4 mb-4">
         <div className={`p-3 rounded-xl bg-white shadow-sm`}>
           <Icon className={colors.icon} size={28} />
@@ -97,15 +103,13 @@ const ResultCard = ({ result, loading }) => {
         </div>
       </div>
 
-      {result.id && (
-        <div className="mt-3 flex items-center gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
-          <FiFileText className="text-blue-500 flex-shrink-0" size={16} />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-slate-700">Report Saved</p>
-            <p className="text-xs text-slate-500">This prediction has been saved to your Medical Reports</p>
-          </div>
-        </div>
-      )}
+      <button
+        onClick={() => generateReportPDF(result)}
+        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
+      >
+        <FiDownload size={16} />
+        Download PDF Report
+      </button>
     </Card>
   );
 };

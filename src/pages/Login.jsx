@@ -20,7 +20,9 @@ const Login = () => {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { values, errors, touched, handleChange, handleBlur, validateAll } = useForm({ email: "", password: "" }, validate);
+  const { values, errors, touched, handleChange, handleBlur, validateAll } = useForm(
+    { email: "", password: "" }, validate
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,22 +56,14 @@ const Login = () => {
         <div className="card shadow-xl">
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError("")} /></div>}
 
-          <div className="grid grid-cols-2 gap-3 mb-6 p-3 bg-slate-50 rounded-xl">
-            <button onClick={() => { }} className="text-xs py-2 px-3 bg-white rounded-lg shadow-sm text-slate-600 font-medium">
-              👤 patient@medai.com
-            </button>
-            <button onClick={() => { }} className="text-xs py-2 px-3 bg-white rounded-lg shadow-sm text-slate-600 font-medium">
-              👨‍⚕️ doctor@medai.com
-            </button>
-          </div>
-          <p className="text-xs text-slate-400 text-center -mt-3 mb-4">Use any password (demo)</p>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Email Address</label>
               <div className="relative">
                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input name="email" type="email" value={values.email} onChange={handleChange} onBlur={handleBlur} placeholder="you@example.com" className={`input pl-10 ${touched.email && errors.email ? "border-red-400 focus:ring-red-400" : ""}`} />
+                <input name="email" type="email" value={values.email} onChange={handleChange}
+                  onBlur={handleBlur} placeholder="you@example.com"
+                  className={`input pl-10 ${touched.email && errors.email ? "border-red-400" : ""}`} />
               </div>
               {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
@@ -78,8 +72,11 @@ const Login = () => {
               <label className="label">Password</label>
               <div className="relative">
                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input name="password" type={showPass ? "text" : "password"} value={values.password} onChange={handleChange} onBlur={handleBlur} placeholder="••••••••" className={`input pl-10 pr-10 ${touched.password && errors.password ? "border-red-400 focus:ring-red-400" : ""}`} />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <input name="password" type={showPass ? "text" : "password"} value={values.password}
+                  onChange={handleChange} onBlur={handleBlur} placeholder="••••••••"
+                  className={`input pl-10 pr-10 ${touched.password && errors.password ? "border-red-400" : ""}`} />
+                <button type="button" onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                   {showPass ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
@@ -90,7 +87,8 @@ const Login = () => {
           </form>
 
           <p className="text-center text-sm text-slate-500 mt-6">
-            Don't have an account? <Link to="/signup" className="text-blue-600 font-semibold hover:underline">Sign up</Link>
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-blue-600 font-semibold hover:underline">Sign up</Link>
           </p>
         </div>
       </div>

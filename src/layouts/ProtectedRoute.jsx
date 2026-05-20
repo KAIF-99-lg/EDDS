@@ -1,14 +1,6 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { Outlet } from "react-router-dom";
 
-const ProtectedRoute = ({ children, role }) => {
-  const { user, isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (role && user?.role !== role) {
-    return <Navigate to={user?.role === "doctor" ? "/doctor/dashboard" : "/patient/dashboard"} replace />;
-  }
-  return children;
-};
+// Auth removed — all routes are publicly accessible
+const ProtectedRoute = ({ children }) => children || <Outlet />;
 
 export default ProtectedRoute;

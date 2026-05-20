@@ -1,14 +1,18 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
+
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY --chown=user . .
 
 RUN mkdir -p ml_models uploads
 
-ENV PORT=8080
+EXPOSE 7860
 
-CMD gunicorn app:app --bind 0.0.0.0:$PORT --timeout 300 --workers 1
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:7860", "--timeout", "300", "--workers", "1"]
