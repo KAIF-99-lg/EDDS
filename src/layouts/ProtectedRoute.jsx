@@ -1,6 +1,7 @@
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
-// Auth removed — all routes are publicly accessible
-const ProtectedRoute = ({ children }) => children || <Outlet />;
-
-export default ProtectedRoute;
+export const ProtectedRoute = () => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};

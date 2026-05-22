@@ -1,7 +1,6 @@
-import { FiCheckCircle, FiAlertCircle, FiAlertTriangle, FiActivity, FiDownload } from "react-icons/fi";
+import { FiCheckCircle, FiAlertCircle, FiAlertTriangle, FiActivity } from "react-icons/fi";
 import Card from "./Card";
 import { formatDateTime } from "../utils/helpers";
-import { generateReportPDF } from "../utils/generateReportPDF";
 
 const ResultCard = ({ result, loading, imageUrl }) => {
   if (loading) {
@@ -34,8 +33,8 @@ const ResultCard = ({ result, loading, imageUrl }) => {
   return (
     <Card className={`${colors.bg} border ${colors.border} animate-slide-up`}>
       {imageUrl && (
-        <div className="mb-4 rounded-xl overflow-hidden border border-slate-200">
-          <img src={imageUrl} alt="Analyzed scan" className="w-full h-44 object-cover" />
+        <div className="mb-4 rounded-xl overflow-hidden border border-slate-200 bg-black">
+          <img src={imageUrl} alt="Analyzed scan" className="w-full object-contain" />
         </div>
       )}
       <div className="flex items-start gap-4 mb-4">
@@ -102,14 +101,6 @@ const ResultCard = ({ result, loading, imageUrl }) => {
           </div>
         </div>
       </div>
-
-      <button
-        onClick={() => generateReportPDF(result)}
-        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
-      >
-        <FiDownload size={16} />
-        Download PDF Report
-      </button>
     </Card>
   );
 };

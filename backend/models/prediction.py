@@ -6,8 +6,7 @@ class Prediction(db.Model):
     __tablename__ = "predictions"
 
     id             = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    patient_id     = db.Column(db.String(36), db.ForeignKey("patients.id"), nullable=False, index=True)
-    doctor_id      = db.Column(db.String(36), db.ForeignKey("doctors.id"), nullable=True)
+    user_id        = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False, index=True)
     disease_type   = db.Column(db.String(50), nullable=False, index=True)
     result         = db.Column(db.String(50))
     confidence     = db.Column(db.Float)
@@ -17,12 +16,12 @@ class Prediction(db.Model):
     image_path     = db.Column(db.String(255))
     created_at     = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
-    patient = db.relationship("Patient", backref="predictions")
+    user = db.relationship("User", backref="predictions")
 
     def to_dict(self):
         return {
             "id":             self.id,
-            "patient_id":     self.patient_id,
+            "user_id":        self.user_id,
             "disease_type":   self.disease_type,
             "result":         self.result,
             "confidence":     self.confidence,

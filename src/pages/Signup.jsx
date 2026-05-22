@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiActivity, FiMail, FiLock, FiUser, FiEye, FiEyeOff, FiPhone, FiMapPin } from "react-icons/fi";
+import { FiActivity, FiMail, FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { useForm } from "../hooks/useForm";
 import Button from "../components/Button";
 import Alert from "../components/Alert";
-
-const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const validate = (v) => {
   const e = {};
@@ -27,7 +25,7 @@ const Signup = () => {
   const [error,    setError]    = useState("");
 
   const { values, errors, touched, handleChange, handleBlur, validateAll } = useForm(
-    { name: "", email: "", password: "", gender: "", age: "", phone: "", blood_group: "", address: "" },
+    { name: "", email: "", password: "" },
     validate
   );
 
@@ -36,7 +34,7 @@ const Signup = () => {
     if (!validateAll()) return;
     setLoading(true); setError("");
     try {
-      await signup({ ...values, role: "patient" });
+      await signup(values);
       setSuccess("Account created! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch {
@@ -98,59 +96,6 @@ const Signup = () => {
                 </button>
               </div>
               {touched.password && errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-            </div>
-
-            <div>
-              <label className="label">Gender</label>
-              <div className="grid grid-cols-3 gap-2">
-                {["Male", "Female", "Other"].map((g) => (
-                  <label key={g} className={`flex items-center justify-center p-2.5 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all ${
-                    values.gender === g ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
-                  }`}>
-                    <input type="radio" name="gender" value={g} checked={values.gender === g} onChange={handleChange} className="hidden" />
-                    {g}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label">Age</label>
-                <input name="age" type="number" value={values.age} onChange={handleChange}
-                  placeholder="e.g. 30" className="input" min={1} max={120} />
-              </div>
-              <div>
-                <label className="label">Phone</label>
-                <div className="relative">
-                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input name="phone" value={values.phone} onChange={handleChange}
-                    placeholder="+92 300..." className="input pl-10" />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="label">Blood Group</label>
-              <div className="grid grid-cols-4 gap-2">
-                {BLOOD_GROUPS.map((bg) => (
-                  <label key={bg} className={`flex items-center justify-center p-2 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all ${
-                    values.blood_group === bg ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
-                  }`}>
-                    <input type="radio" name="blood_group" value={bg} checked={values.blood_group === bg} onChange={handleChange} className="hidden" />
-                    {bg}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="label">Address (optional)</label>
-              <div className="relative">
-                <FiMapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input name="address" value={values.address} onChange={handleChange}
-                  placeholder="City, Country" className="input pl-10" />
-              </div>
             </div>
 
             <Button type="submit" loading={loading} className="w-full" size="lg">Create Account</Button>

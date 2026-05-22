@@ -31,7 +31,7 @@ const Login = () => {
     setError("");
     try {
       const data = await login(values.email, values.password);
-      navigate(data.user.role === "doctor" ? "/doctor/dashboard" : "/patient/dashboard");
+      navigate("/dashboard");
     } catch {
       setError("Invalid credentials. Please try again.");
     } finally {

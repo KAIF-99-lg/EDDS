@@ -56,15 +56,13 @@ const ImageUpload = ({ onFileSelect, label = "Upload Medical Image", accept = "i
           </label>
         </div>
       ) : (
-        <div className="relative rounded-2xl overflow-hidden border border-slate-200">
-          <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover" />
-          <div className="absolute inset-0 bg-black/20 flex items-end p-3">
-            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 flex-1">
-              <FiImage size={16} className="text-blue-600" />
-              <span className="text-sm font-medium text-slate-700 truncate">{fileName}</span>
-            </div>
-            <button onClick={clearFile} className="ml-2 p-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors">
-              <FiX size={16} />
+        <div className="rounded-2xl overflow-hidden border border-slate-200 bg-black">
+          <img src={previewUrl} alt="Preview" className="w-full object-contain" />
+          <div className="flex items-center gap-2 bg-slate-50 border-t border-slate-200 px-3 py-2">
+            <FiImage size={16} className="text-blue-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-slate-700 truncate flex-1">{fileName}</span>
+            <button onClick={clearFile} className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex-shrink-0">
+              <FiX size={14} />
             </button>
           </div>
         </div>

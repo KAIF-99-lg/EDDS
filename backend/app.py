@@ -75,15 +75,36 @@ except Exception as e:
 
 # ── Flask app ─────────────────────────────────────────────────
 from routes.prediction_routes import prediction_bp
+from routes.auth_routes import auth_bp
+from routes.patient_routes import patient_bp
+from routes.report_routes import report_bp
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
+    f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
-CORS(app, resources={r"/*": {
-    "origins": "*",
-    "methods": ["GET", "POST", "OPTIONS"],
-    "allow_headers": ["Content-Type"],
+from config.db import db
+from flask_jwt_extended import JWTManager
+db.init_app(app)
+JWTManager(app)
+
+with app.app_context():
+    from models.user import User
+    from models.prediction import Prediction
+    from models.report import Report
+    db.create_all()
+    logger.info("✅ Tables ready")
+
+CORS(app, supports_credentials=True, resources={r"/*": {
+    "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization"],
 }})
 
 limiter = Limiter(
@@ -103,6 +124,9 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 app.register_blueprint(prediction_bp, url_prefix="/api/predict")
+app.register_blueprint(auth_bp,       url_prefix="/api/auth")
+app.register_blueprint(patient_bp,    url_prefix="/api/patients")
+app.register_blueprint(report_bp,     url_prefix="/api/reports")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

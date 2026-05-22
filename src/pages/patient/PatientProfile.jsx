@@ -48,7 +48,8 @@ const PatientProfile = () => {
     e.preventDefault();
     setLoading(true); setError("");
     try {
-      await patientService.updatePatient(profileId, {
+      await patientService.updateMyProfile({
+        name:              form.name,
         phone:             form.phone,
         age:               form.age,
         gender:            form.gender,

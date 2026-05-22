@@ -1,10 +1,31 @@
-import { useState, useContext, createContext } from "react";
+import { useState, useEffect, useContext, createContext } from "react";
 import { authService } from "../services/authService";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(authService.getCurrentUser());
+  const [user, setUser]       = useState(null);
+  const [ready, setReady]     = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) { setReady(true); return; }
+    // verify token by fetching profile
+    fetch((import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api") + "/patients/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      if (res.ok) return res.json();
+      authService.logout();
+      return null;
+    }).then((profile) => {
+      if (profile) {
+        const stored = authService.getCurrentUser();
+        setUser({ ...stored, ...profile });
+      }
+    }).catch(() => {
+      authService.logout();
+    }).finally(() => setReady(true));
+  }, []);
 
   const login = async (email, password) => {
     const data = await authService.login(email, password);
@@ -20,6 +41,8 @@ export const AuthProvider = ({ children }) => {
   const signup = async (userData) => {
     return await authService.signup(userData);
   };
+
+  if (!ready) return null;
 
   return (
     <AuthContext.Provider value={{ user, login, logout, signup, isAuthenticated: !!user }}>

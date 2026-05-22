@@ -3,6 +3,7 @@ import uuid
 import numpy as np
 from datetime import datetime
 from flask import request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.image_utils import preprocess_image
 
 BASE       = os.path.join(os.path.dirname(__file__), "..", "ml_models")
@@ -51,7 +52,31 @@ def _save_image(image_file, prefix):
         return None
 
 
-def _resp(disease, result, confidence=None, risk_score=None, recommendation=""):
+def _save_prediction(user_id, disease_type, result, confidence, risk_score, recommendation, image_path=None):
+    try:
+        from config.db import db
+        from models.prediction import Prediction
+        from models.report import Report
+        p = Prediction(
+            user_id=user_id, disease_type=disease_type, result=result,
+            confidence=confidence, risk_score=risk_score,
+            recommendation=recommendation, image_path=image_path
+        )
+        db.session.add(p)
+        db.session.flush()
+        r = Report(
+            user_id=user_id, prediction_id=p.id,
+            report_type=disease_type, result=result, status="Pending Review"
+        )
+        db.session.add(r)
+        db.session.commit()
+    except Exception as e:
+        print(f"Save prediction failed: {e}")
+
+
+def _resp(disease, result, confidence=None, risk_score=None, recommendation="", user_id=None, image_path=None):
+    if user_id:
+        _save_prediction(user_id, disease, result, confidence, risk_score, recommendation, image_path)
     return jsonify({
         "disease": disease,
         "result": result,
@@ -62,8 +87,19 @@ def _resp(disease, result, confidence=None, risk_score=None, recommendation=""):
     }), 200
 
 
+def get_my_history():
+    from config.db import db
+    from models.prediction import Prediction
+    user_id = get_jwt_identity()
+    preds = Prediction.query.filter_by(user_id=user_id).order_by(Prediction.created_at.desc()).all()
+    return jsonify([p.to_dict() for p in preds]), 200
+
+
 # ── Heart Disease ─────────────────────────────────────────────
+@jwt_required(optional=True)
 def predict_heart():
+    from flask_jwt_extended import get_jwt_identity
+    user_id = get_jwt_identity()
     data = request.get_json()
 
     cp_map = {"Typical Angina": 0, "Atypical Angina": 1, "Non-anginal": 2, "Asymptomatic": 3}
@@ -74,14 +110,9 @@ def predict_heart():
         cp_map.get(data.get("chestPain", "Asymptomatic"), 3),
         float(data.get("bp", 120)),
         float(data.get("cholesterol", 200)),
-        0,  # bloodSugar default
-        0,  # restingECG default
+        0, 0,
         float(data.get("maxHR", 150)),
-        0,  # exerciseAngina default
-        1.0,  # oldpeak default
-        1,  # slope default
-        0,  # majorVessels default
-        0,  # thal default
+        0, 1.0, 1, 0, 0,
     ]])
 
     if heart_scaler:
@@ -91,16 +122,19 @@ def predict_heart():
     result     = "High Risk" if risk_score > 50 else "Low Risk"
     rec        = "Cardiac evaluation recommended." if result == "High Risk" else "Low risk. Maintain healthy lifestyle."
 
-    return _resp("Heart Disease", result, risk_score=round(risk_score, 2), recommendation=rec)
+    return _resp("Heart Disease", result, risk_score=round(risk_score, 2), recommendation=rec, user_id=user_id)
 
 
 # ── Pneumonia ─────────────────────────────────────────────────
+@jwt_required(optional=True)
 def predict_pneumonia():
+    from flask_jwt_extended import get_jwt_identity
+    user_id    = get_jwt_identity()
     image_file = request.files.get("image")
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    _save_image(image_file, "pneumonia")
+    image_path = _save_image(image_file, "pneumonia")
     img   = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
     preds = _predict(pneumonia_model, img)
     raw   = float(preds[0][0]) if preds is not None else 0.5
@@ -109,19 +143,22 @@ def predict_pneumonia():
     result     = "Positive" if raw > 0.5 else "Negative"
     rec        = "Consult pulmonologist immediately." if result == "Positive" else "No pneumonia detected."
 
-    return _resp("Pneumonia", result, confidence=confidence, recommendation=rec)
+    return _resp("Pneumonia", result, confidence=confidence, recommendation=rec, user_id=user_id, image_path=image_path)
 
 
 # ── Brain Tumor ───────────────────────────────────────────────
+@jwt_required(optional=True)
 def predict_brain():
+    from flask_jwt_extended import get_jwt_identity
+    import json
+    user_id    = get_jwt_identity()
     image_file = request.files.get("image")
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    import json
-    _save_image(image_file, "brain")
-    img       = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
-    preds_raw = _predict(brain_model, img)
+    image_path = _save_image(image_file, "brain")
+    img        = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
+    preds_raw  = _predict(brain_model, img)
 
     if preds_raw is not None:
         classes_path = os.path.join(BASE, "brain_classes.json")
@@ -147,16 +184,19 @@ def predict_brain():
         "Meningioma": "Meningioma detected. Neurology referral recommended.",
         "Pituitary":  "Pituitary tumor detected. Endocrinology consultation advised.",
     }
-    return _resp("Brain Tumor", result, confidence=confidence, recommendation=recs.get(result, "Consult a specialist."))
+    return _resp("Brain Tumor", result, confidence=confidence, recommendation=recs.get(result, "Consult a specialist."), user_id=user_id, image_path=image_path)
 
 
 # ── Skin Cancer ───────────────────────────────────────────────
+@jwt_required(optional=True)
 def predict_skin():
+    from flask_jwt_extended import get_jwt_identity
+    user_id    = get_jwt_identity()
     image_file = request.files.get("image")
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    _save_image(image_file, "skin")
+    image_path = _save_image(image_file, "skin")
     img   = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
     preds = _predict(skin_model, img)
     raw   = float(preds[0][0]) if preds is not None else 0.5
@@ -165,19 +205,22 @@ def predict_skin():
     result     = "Melanoma Detected" if raw > 0.5 else "Benign"
     rec        = "Immediate dermatology referral required." if "Melanoma" in result else "Benign lesion. Monitor for changes."
 
-    return _resp("Skin Cancer", result, confidence=confidence, recommendation=rec)
+    return _resp("Skin Cancer", result, confidence=confidence, recommendation=rec, user_id=user_id, image_path=image_path)
 
 
 # ── Breast Cancer ─────────────────────────────────────────────
+@jwt_required(optional=True)
 def predict_breast():
+    from flask_jwt_extended import get_jwt_identity
+    import json
+    user_id    = get_jwt_identity()
     image_file = request.files.get("image")
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
-    import json
-    _save_image(image_file, "breast")
-    img       = preprocess_image(image_file, target_size=(224, 224))
-    preds_raw = _predict(breast_model, img)
+    image_path = _save_image(image_file, "breast")
+    img        = preprocess_image(image_file, target_size=(224, 224))
+    preds_raw  = _predict(breast_model, img)
 
     if preds_raw is not None:
         classes_path = os.path.join(BASE, "breast_classes.json")
@@ -196,4 +239,4 @@ def predict_breast():
         "Benign":    "Benign finding. Regular follow-up advised.",
         "Normal":    "No abnormality detected. Routine screening recommended.",
     }
-    return _resp("Breast Cancer", result, confidence=confidence, recommendation=recs.get(result, "Consult a specialist."))
+    return _resp("Breast Cancer", result, confidence=confidence, recommendation=recs.get(result, "Consult a specialist."), user_id=user_id, image_path=image_path)
