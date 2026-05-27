@@ -4,6 +4,8 @@ import { RiHeartPulseFill } from "react-icons/ri";
 import { MdCloudUpload, MdBiotech, MdAssignment, MdSpeed, MdSecurity, MdPsychology } from "react-icons/md";
 import Button from "../components/Button";
 import { useAuth } from "../hooks/useAuth";
+import Footer from "../components/Footer";
+import logoImg from "../assets/logo.png";
 
 import brainIcon  from "../../icons_home_page/brain.png";
 import breastIcon from "../../icons_home_page/breast.png";
@@ -34,13 +36,7 @@ const Home = () => {
     <nav className="border-b border-slate-100 px-6 py-4 sticky top-0 z-40 bg-white/90 backdrop-blur">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-            <RiHeartPulseFill className="text-white" size={18} />
-          </div>
-          <div>
-            <span className="font-bold text-lg text-slate-900 leading-none block">MedAI</span>
-            <span className="text-xs text-slate-400 leading-none">Disease Detection</span>
-          </div>
+          <img src={logoImg} alt="ZenMD" className="h-9 w-auto object-contain" />
         </div>
         <Link to={isAuthenticated ? "/dashboard" : "/login"}>
           <Button size="sm">{isAuthenticated ? <><FiUser size={14}/> Dashboard</> : "Sign In"}</Button>
@@ -179,13 +175,7 @@ const Home = () => {
     </section>
 
     {/* ── FOOTER ─────────────────────────────────────────────── */}
-    <footer className="border-t border-slate-100 py-4">
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-center py-8">
-        <p className="text-slate-400 text-sm text-center">
-          AI-generated results are for informational purposes only. Always consult a qualified physician.
-        </p>
-      </div>
-    </footer>
+    <Footer />
 
   </div>
   );

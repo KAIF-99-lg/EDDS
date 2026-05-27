@@ -70,6 +70,13 @@ try:
     pc.heart_scaler    = load_pickle("heart_scaler.pkl")
     logger.info("✅ All models loaded!")
 
+    # Load image type classifier (for input validation)
+    from utils.image_utils import load_type_classifier
+    load_type_classifier(
+        os.path.join(ML_DIR, "image_type_classifier.h5"),
+        os.path.join(ML_DIR, "image_type_classes.json"),
+    )
+
 except Exception as e:
     logger.error(f"Model loading error: {e}")
 
@@ -97,12 +104,15 @@ JWTManager(app)
 with app.app_context():
     from models.user import User
     from models.prediction import Prediction
-    from models.report import Report
     db.create_all()
     logger.info("✅ Tables ready")
 
 CORS(app, supports_credentials=True, resources={r"/*": {
-    "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+    "origins": [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://edds-teal.vercel.app",
+    ],
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
 }})

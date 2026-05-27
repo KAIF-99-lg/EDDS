@@ -1,0 +1,21 @@
+
+High Risk Sample 1
+
+
+Age: 62
+
+
+Gender: Male
+
+
+Chest Pain Type: Typical angina
+
+
+Blood Pressure: 165
+
+
+Cholesterol: 310
+
+
+Max Heart Rate: 95
+

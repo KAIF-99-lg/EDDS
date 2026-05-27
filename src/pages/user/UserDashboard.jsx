@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FiActivity, FiFileText, FiClock, FiAlertCircle, FiArrowRight, FiHeart } from "react-icons/fi";
+import { FiActivity, FiFileText, FiClock, FiArrowRight, FiHeart } from "react-icons/fi";
 import { GiBrain } from "react-icons/gi";
 import { useAuth } from "../../hooks/useAuth";
 import Card, { StatCard } from "../../components/Card";
@@ -35,7 +35,6 @@ const UserDashboard = () => {
   }, []);
 
   const pending = reports.filter(r => r.status !== "Reviewed").length;
-  const alerts  = reports.filter(r => !isGood(r.result)).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -44,11 +43,9 @@ const UserDashboard = () => {
         <p className="text-slate-500 mt-0.5">Your health dashboard</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<FiActivity size={22} />} label="Total Scans"  value={loading ? "—" : history.length} color="blue"   loading={loading} />
-        <StatCard icon={<FiFileText size={22} />} label="Reports"      value={loading ? "—" : reports.length} color="green"  loading={loading} />
-        <StatCard icon={<FiClock    size={22} />} label="Pending"      value={loading ? "—" : pending}        color="yellow" loading={loading} />
-        <StatCard icon={<FiAlertCircle size={22}/>}label="Alerts"      value={loading ? "—" : alerts}         color="red"    loading={loading} />
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard icon={<FiActivity size={22} />} label="Total Scans" value={loading ? "—" : history.length} color="blue"  loading={loading} />
+        <StatCard icon={<FiFileText size={22} />} label="Reports"     value={loading ? "—" : reports.length} color="green" loading={loading} />
       </div>
 
       <div>

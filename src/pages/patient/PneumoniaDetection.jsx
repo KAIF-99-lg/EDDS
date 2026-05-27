@@ -14,32 +14,9 @@ const toDisplayResult = (data) => ({
   timestamp: data.timestamp || data.created_at,
 });
 
-const generateSampleImage = (type) =>
-  new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 224; canvas.height = 224;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#111"; ctx.fillRect(0, 0, 224, 224);
-    if (type === "normal") {
-      ctx.fillStyle = "#444";
-      ctx.beginPath(); ctx.ellipse(80, 112, 45, 70, -0.2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(144, 112, 45, 70, 0.2, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.fillStyle = "#444";
-      ctx.beginPath(); ctx.ellipse(80, 112, 45, 70, -0.2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(144, 112, 45, 70, 0.2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.5)";
-      ctx.beginPath(); ctx.ellipse(90, 130, 25, 20, 0.3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(150, 100, 20, 15, -0.2, 0, Math.PI * 2); ctx.fill();
-    }
-    canvas.toBlob((blob) =>
-      resolve(new File([blob], `sample_${type}.png`, { type: "image/png" }))
-    );
-  });
-
 const samples = [
-  { type: "normal",    label: "Normal Sample" },
-  { type: "pneumonia", label: "Pneumonia Sample" },
+  { label: "Normal",    path: "/samples/pneumonia/normal/image.png",    ext: "png" },
+  { label: "Pneumonia", path: "/samples/pneumonia/pneumonia/image.png",  ext: "png" },
 ];
 
 const PneumoniaDetection = () => {
@@ -50,11 +27,13 @@ const PneumoniaDetection = () => {
   const [error, setError]           = useState("");
   const [activeSample, setActiveSample] = useState(null);
 
-  const loadSample = async (type) => {
-    const file = await generateSampleImage(type);
+  const loadSample = async ({ label, path, ext }) => {
+    const res  = await fetch(path);
+    const blob = await res.blob();
+    const file = new File([blob], `sample_${label}.${ext}`, { type: blob.type });
     setImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setActiveSample(type);
+    setPreviewUrl(path);
+    setActiveSample(label);
     setResult(null); setError("");
   };
 
@@ -95,13 +74,13 @@ const PneumoniaDetection = () => {
           <h2 className="font-bold text-slate-800 mb-3">Upload Chest X-Ray</h2>
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError("")} /></div>}
 
-          <div className="mb-4">
+          <div className="mb-3">
             <p className="text-xs text-slate-500 mb-2 font-medium">Quick Test Samples:</p>
             <div className="flex flex-wrap gap-2">
               {samples.map((s) => (
-                <button key={s.type} onClick={() => loadSample(s.type)}
+                <button key={s.label} type="button" onClick={() => loadSample(s)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                    activeSample === s.type
+                    activeSample === s.label
                       ? "border-blue-500 bg-blue-100 text-blue-800"
                       : "border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700"
                   }`}>

@@ -1,0 +1,41 @@
+Low Risk Sample 1
+
+
+Age: 28
+
+
+Gender: Female
+
+
+Chest Pain Type: No chest pain
+
+
+Blood Pressure: 118
+
+
+Cholesterol: 170
+
+
+Max Heart Rate: 178
+
+
+Low Risk Sample 2
+
+
+Age: 35
+
+
+Gender: Male
+
+
+Chest Pain Type: No chest pain
+
+
+Blood Pressure: 122
+
+
+Cholesterol: 190
+
+
+Max Heart Rate: 172
+

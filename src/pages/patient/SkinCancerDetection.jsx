@@ -13,14 +13,9 @@ const toDisplayResult = (data) => ({
   timestamp: data.timestamp || data.created_at,
 });
 
-const SAMPLE_RESULTS = {
-  benign:    { disease: "Skin Cancer", result: "Benign",           confidence: 91.4, recommendation: "Benign lesion. Monitor for changes. Annual skin check recommended.",         timestamp: new Date().toISOString() },
-  malignant: { disease: "Skin Cancer", result: "Melanoma Detected",confidence: 88.6, recommendation: "Immediate dermatology referral required. Biopsy recommended.",               timestamp: new Date().toISOString() },
-};
-
 const samples = [
-  { type: "benign",    label: "Benign Sample",    desc: "Non-cancerous skin lesion" },
-  { type: "malignant", label: "Malignant Sample",  desc: "Possible melanoma" },
+  { label: "Benign",    path: "/samples/skin/benign/image.png",    ext: "png" },
+  { label: "Malignant", path: "/samples/skin/malignant/image.jpg", ext: "jpg" },
 ];
 
 const SkinCancerDetection = () => {
@@ -31,31 +26,14 @@ const SkinCancerDetection = () => {
   const [error, setError]           = useState("");
   const [activeSample, setActiveSample] = useState(null);
 
-  const loadSample = (type) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 224; canvas.height = 224;
-    const ctx = canvas.getContext("2d");
-    if (type === "benign") {
-      ctx.fillStyle = "#c8a882"; ctx.fillRect(0, 0, 224, 224);
-      const g = ctx.createRadialGradient(112, 112, 5, 112, 112, 40);
-      g.addColorStop(0, "#a0724a"); g.addColorStop(1, "#c8a882");
-      ctx.fillStyle = g; ctx.beginPath();
-      ctx.ellipse(112, 112, 35, 38, 0, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.fillStyle = "#c8a882"; ctx.fillRect(0, 0, 224, 224);
-      ctx.fillStyle = "#3a1a0a";
-      ctx.beginPath();
-      ctx.moveTo(90, 80); ctx.lineTo(145, 75); ctx.lineTo(155, 120);
-      ctx.lineTo(140, 150); ctx.lineTo(95, 148); ctx.lineTo(72, 115);
-      ctx.closePath(); ctx.fill();
-    }
-    canvas.toBlob((blob) => {
-      const file = new File([blob], `sample_${type}.png`, { type: "image/png" });
-      setImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setActiveSample(type);
-      setResult(null); setError("");
-    });
+  const loadSample = async ({ label, path, ext }) => {
+    const res  = await fetch(path);
+    const blob = await res.blob();
+    const file = new File([blob], `sample_${label}.${ext}`, { type: blob.type });
+    setImage(file);
+    setPreviewUrl(path);
+    setActiveSample(label);
+    setResult(null); setError("");
   };
 
   const handleFileSelect = (file) => {
@@ -67,10 +45,6 @@ const SkinCancerDetection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!image) { setError("Please upload a skin lesion image."); return; }
-    if (activeSample) {
-      setResult({ ...SAMPLE_RESULTS[activeSample], timestamp: new Date().toISOString() });
-      return;
-    }
     setLoading(true); setError(""); setResult(null);
     try {
       const data = await predictionService.predictSkinCancer(image);
@@ -99,13 +73,13 @@ const SkinCancerDetection = () => {
           <h2 className="font-bold text-slate-800 mb-3">Upload Skin Lesion Image</h2>
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError("")} /></div>}
 
-          <div className="mb-4">
+          <div className="mb-3">
             <p className="text-xs text-slate-500 mb-2 font-medium">Quick Test Samples:</p>
             <div className="flex flex-wrap gap-2">
               {samples.map((s) => (
-                <button key={s.type} onClick={() => loadSample(s.type)}
+                <button key={s.label} type="button" onClick={() => loadSample(s)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                    activeSample === s.type
+                    activeSample === s.label
                       ? "border-yellow-500 bg-yellow-100 text-yellow-800"
                       : "border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50 text-yellow-700"
                   }`}>

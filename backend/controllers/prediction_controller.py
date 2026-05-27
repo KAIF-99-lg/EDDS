@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from utils.image_utils import preprocess_image
+from utils.image_utils import preprocess_image, validate_medical_image
 
 BASE       = os.path.join(os.path.dirname(__file__), "..", "ml_models")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
@@ -56,19 +56,12 @@ def _save_prediction(user_id, disease_type, result, confidence, risk_score, reco
     try:
         from config.db import db
         from models.prediction import Prediction
-        from models.report import Report
         p = Prediction(
             user_id=user_id, disease_type=disease_type, result=result,
             confidence=confidence, risk_score=risk_score,
             recommendation=recommendation, image_path=image_path
         )
         db.session.add(p)
-        db.session.flush()
-        r = Report(
-            user_id=user_id, prediction_id=p.id,
-            report_type=disease_type, result=result, status="Pending Review"
-        )
-        db.session.add(r)
         db.session.commit()
     except Exception as e:
         print(f"Save prediction failed: {e}")
@@ -134,6 +127,10 @@ def predict_pneumonia():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
+    ok, msg = validate_medical_image(image_file, "chest")
+    if not ok:
+        return jsonify({"error": msg}), 400
+
     image_path = _save_image(image_file, "pneumonia")
     img   = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
     preds = _predict(pneumonia_model, img)
@@ -155,6 +152,10 @@ def predict_brain():
     image_file = request.files.get("image")
     if not image_file:
         return jsonify({"error": "Image required"}), 400
+
+    ok, msg = validate_medical_image(image_file, "brain")
+    if not ok:
+        return jsonify({"error": msg}), 400
 
     image_path = _save_image(image_file, "brain")
     img        = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
@@ -196,6 +197,10 @@ def predict_skin():
     if not image_file:
         return jsonify({"error": "Image required"}), 400
 
+    ok, msg = validate_medical_image(image_file, "skin")
+    if not ok:
+        return jsonify({"error": msg}), 400
+
     image_path = _save_image(image_file, "skin")
     img   = preprocess_image(image_file, target_size=(224, 224), mobilenet=True)
     preds = _predict(skin_model, img)
@@ -217,6 +222,10 @@ def predict_breast():
     image_file = request.files.get("image")
     if not image_file:
         return jsonify({"error": "Image required"}), 400
+
+    ok, msg = validate_medical_image(image_file, "breast")
+    if not ok:
+        return jsonify({"error": msg}), 400
 
     image_path = _save_image(image_file, "breast")
     img        = preprocess_image(image_file, target_size=(224, 224))

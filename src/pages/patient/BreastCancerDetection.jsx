@@ -13,65 +13,28 @@ const toDisplayResult = (data) => ({
   timestamp: data.timestamp || data.created_at,
 });
 
-const SAMPLE_RESULTS = {
-  normal:    { disease: "Breast Cancer", result: "Normal",    confidence: 94.3, recommendation: "No abnormality detected. Routine annual screening recommended.", timestamp: new Date().toISOString() },
-  benign:    { disease: "Breast Cancer", result: "Benign",    confidence: 88.7, recommendation: "Benign finding. Regular follow-up and monitoring advised.",        timestamp: new Date().toISOString() },
-  malignant: { disease: "Breast Cancer", result: "Malignant", confidence: 91.2, recommendation: "Urgent oncology consultation required. Further biopsy and imaging needed.", timestamp: new Date().toISOString() },
-};
-
-const generateSampleImage = (type) =>
-  new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 224; canvas.height = 224;
-    const ctx = canvas.getContext("2d");
-    if (type === "normal") {
-      ctx.fillStyle = "#888"; ctx.fillRect(0, 0, 224, 224);
-      const g = ctx.createRadialGradient(112, 112, 20, 112, 112, 90);
-      g.addColorStop(0, "#aaa"); g.addColorStop(1, "#666");
-      ctx.fillStyle = g; ctx.beginPath();
-      ctx.ellipse(112, 112, 70, 80, 0, 0, Math.PI * 2); ctx.fill();
-    } else if (type === "benign") {
-      ctx.fillStyle = "#555"; ctx.fillRect(0, 0, 224, 224);
-      const g = ctx.createRadialGradient(100, 100, 5, 100, 100, 50);
-      g.addColorStop(0, "#ddd"); g.addColorStop(1, "#777");
-      ctx.fillStyle = g; ctx.beginPath();
-      ctx.ellipse(100, 100, 45, 48, 0.2, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.fillStyle = "#444"; ctx.fillRect(0, 0, 224, 224);
-      ctx.fillStyle = "#ccc"; ctx.beginPath();
-      ctx.moveTo(90, 70); ctx.lineTo(140, 65); ctx.lineTo(155, 110);
-      ctx.lineTo(145, 145); ctx.lineTo(100, 150); ctx.lineTo(75, 120);
-      ctx.closePath(); ctx.fill();
-    }
-    canvas.toBlob((blob) => resolve(new File([blob], `sample_${type}.png`, { type: "image/png" })));
-  });
-
 const samples = [
-  { label: "Normal Sample",    type: "normal",    desc: "Healthy breast tissue — no abnormality" },
-  { label: "Benign Sample",    type: "benign",    desc: "Smooth round mass — likely non-cancerous" },
-  { label: "Malignant Sample", type: "malignant", desc: "Irregular mass — possible cancer" },
+  { label: "Normal",    path: "/samples/breast/normal/image.png",    ext: "png" },
+  { label: "Benign",    path: "/samples/breast/benign/image.png",    ext: "png" },
+  { label: "Malignant", path: "/samples/breast/malignant/image.png", ext: "png" },
 ];
 
 const BreastCancerDetection = () => {
   const [image, setImage]           = useState(null);
-  const [previewUrl, setPreviewUrl]   = useState(null);
-  const [loading, setLoading]         = useState(false);
-  const [result, setResult]           = useState(null);
-  const [error, setError]             = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loading, setLoading]       = useState(false);
+  const [result, setResult]         = useState(null);
+  const [error, setError]           = useState("");
   const [activeSample, setActiveSample] = useState(null);
 
-  const loadSample = async (type) => {
-    const file = await generateSampleImage(type);
+  const loadSample = async ({ label, path, ext }) => {
+    const res  = await fetch(path);
+    const blob = await res.blob();
+    const file = new File([blob], `sample_${label}.${ext}`, { type: blob.type });
     setImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setActiveSample(type);
-    setResult(null);
-    setError("");
-  };
-
-  const clearImage = () => {
-    setImage(null);
-    setPreviewUrl(null);
+    setPreviewUrl(path);
+    setActiveSample(label);
+    setResult(null); setError("");
   };
 
   const handleFileSelect = (file) => {
@@ -83,11 +46,6 @@ const BreastCancerDetection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!image) { setError("Please upload a breast ultrasound image."); return; }
-    // Sample image — show mock result instantly
-    if (activeSample) {
-      setResult({ ...SAMPLE_RESULTS[activeSample], timestamp: new Date().toISOString() });
-      return;
-    }
     setLoading(true);
     setError("");
     setResult(null);
@@ -118,14 +76,13 @@ const BreastCancerDetection = () => {
           <h2 className="font-bold text-slate-800 mb-3">Upload Ultrasound Image</h2>
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError("")} /></div>}
 
-          {/* Sample Buttons */}
-          <div className="mb-4">
+          <div className="mb-3">
             <p className="text-xs text-slate-500 mb-2 font-medium">Quick Test Samples:</p>
             <div className="flex flex-wrap gap-2">
               {samples.map((s) => (
-                <button key={s.type} onClick={() => loadSample(s.type)}
+                <button key={s.label} type="button" onClick={() => loadSample(s)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                    activeSample === s.type
+                    activeSample === s.label
                       ? "border-pink-500 bg-pink-100 text-pink-800"
                       : "border-pink-200 hover:border-pink-400 hover:bg-pink-50 text-pink-700"
                   }`}>

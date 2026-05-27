@@ -3,6 +3,7 @@ import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import { FiActivity, FiMenu, FiHeart, FiHome, FiClock, FiFileText, FiUser, FiLogOut } from "react-icons/fi";
 import { GiBrain } from "react-icons/gi";
 import { useAuth } from "../hooks/useAuth";
+import logoImg from "../assets/logo.png";
 
 const detectNav = [
   { to: "/brain-tumor",   icon: GiBrain,      label: "Brain Tumor" },
@@ -35,10 +36,7 @@ const DashboardLayout = ({ showUser }) => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-5 border-b border-slate-100 flex items-center gap-3">
-        <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
-          <FiActivity className="text-white" size={18} />
-        </div>
-        <span className="font-bold text-slate-800 text-lg">MedAI</span>
+        <img src={logoImg} alt="ZenMD" className="h-8 w-auto object-contain" />
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -94,10 +92,7 @@ const DashboardLayout = ({ showUser }) => {
               <FiMenu size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-                <FiActivity className="text-white" size={14} />
-              </div>
-              <span className="font-bold text-slate-800">MedAI</span>
+              <img src={logoImg} alt="ZenMD" className="h-7 w-auto object-contain" />
             </div>
           </div>
           {!showUser && (

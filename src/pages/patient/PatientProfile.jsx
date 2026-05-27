@@ -1,145 +1,117 @@
 import { useState, useEffect } from "react";
-import { FiUser, FiSave } from "react-icons/fi";
+import { FiUser, FiEdit2, FiSave, FiX } from "react-icons/fi";
+import { patientService } from "../../services/patientService";
 import { useAuth } from "../../hooks/useAuth";
 import Card from "../../components/Card";
-import Button from "../../components/Button";
-import Alert from "../../components/Alert";
-import { patientService } from "../../services/patientService";
+
+const FIELDS = [
+  { key: "name",              label: "Full Name",         type: "text" },
+  { key: "email",             label: "Email",             type: "email",  readOnly: true },
+  { key: "phone",             label: "Phone",             type: "text" },
+  { key: "age",               label: "Age",               type: "number" },
+  { key: "gender",            label: "Gender",            type: "select", options: ["Male", "Female", "Other"] },
+  { key: "blood_group",       label: "Blood Group",       type: "select", options: ["A+","A-","B+","B-","AB+","AB-","O+","O-"] },
+  { key: "address",           label: "Address",           type: "text" },
+  { key: "emergency_contact", label: "Emergency Contact", type: "text" },
+  { key: "allergies",         label: "Allergies",         type: "text" },
+];
 
 const PatientProfile = () => {
-  const { user } = useAuth();
-  const [success, setSuccess] = useState("");
+  const { user, setUser } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [form, setForm]       = useState({});
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [profileId, setProfileId] = useState(null);
-  const [form, setForm] = useState({
-    name: user?.name || "", email: user?.email || "",
-    phone: "", age: "", gender: "", bloodGroup: "", address: "",
-    emergencyContact: "", allergies: "", conditions: "",
-  });
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     patientService.getMyProfile()
-      .then((p) => {
-        if (p) {
-          setProfileId(p.id);
-          setForm({
-            name:             p.name             || user?.name  || "",
-            email:            p.email            || user?.email || "",
-            phone:            p.phone            || "",
-            age:              p.age              || "",
-            gender:           p.gender           || "",
-            bloodGroup:       p.blood_group      || "",
-            address:          p.address          || "",
-            emergencyContact: p.emergency_contact|| "",
-            allergies:        p.allergies        || "",
-            conditions:       Array.isArray(p.conditions) ? p.conditions.join(", ") : p.conditions || "",
-          });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setFetching(false));
+      .then((data) => { setProfile(data); setForm(data); })
+      .catch(() => { if (user) { setProfile(user); setForm(user); } })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true); setError("");
+  const handleSave = async () => {
+    setSaving(true); setError(""); setSuccess("");
     try {
-      await patientService.updateMyProfile({
-        name:              form.name,
-        phone:             form.phone,
-        age:               form.age,
-        gender:            form.gender,
-        blood_group:       form.bloodGroup,
-        address:           form.address,
-        emergency_contact: form.emergencyContact,
-        allergies:         form.allergies,
-        conditions:        form.conditions,
-      });
-      setSuccess("Profile updated successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch {
-      setError("Failed to update profile. Please try again.");
+      const updated = await patientService.updateMyProfile(form);
+      setProfile(updated);
+      setForm(updated);
+      setEditing(false);
+      setSuccess("Profile updated successfully.");
+      localStorage.setItem("user", JSON.stringify(updated));
+    } catch (e) {
+      setError(e.message || "Failed to update profile.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (fetching) return <div className="card text-center py-12 text-slate-400">Loading profile...</div>;
+  if (loading) return (
+    <div className="space-y-4 animate-pulse">
+      {Array(6).fill(0).map((_, i) => <div key={i} className="h-14 bg-slate-100 rounded-xl" />)}
+    </div>
+  );
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-3xl">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-          <FiUser className="text-blue-600" size={20} />
+    <div className="space-y-6 animate-fade-in max-w-2xl">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+            <FiUser className="text-blue-600" size={20} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
+            <p className="text-slate-500 text-sm">Manage your personal information</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Patient Profile</h1>
-          <p className="text-slate-500 text-sm">Manage your personal information</p>
-        </div>
+        {!editing ? (
+          <button onClick={() => { setEditing(true); setSuccess(""); setError(""); }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+            <FiEdit2 size={15} /> Edit
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={() => { setEditing(false); setForm(profile); setError(""); }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
+              <FiX size={15} /> Cancel
+            </button>
+            <button onClick={handleSave} disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60">
+              <FiSave size={15} /> {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        )}
       </div>
 
-      {success && <Alert type="success" message={success} onClose={() => setSuccess("")} />}
-      {error   && <Alert type="error"   message={error}   onClose={() => setError("")} />}
+      {error   && <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
+      {success && <div className="p-3 bg-green-50 text-green-600 rounded-xl text-sm">{success}</div>}
 
-      <div className="flex items-center gap-4 card">
-        <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
-          <FiUser className="text-blue-600" size={28} />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">{form.name}</h2>
-          <p className="text-slate-500">{form.email}</p>
-          <span className="badge-blue mt-1">Patient ID: {profileId?.slice(0,8) || "—"}</span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <h3 className="font-bold text-slate-800 mb-4">Personal Information</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { name: "name",       label: "Full Name",    disabled: true },
-              { name: "email",      label: "Email",        disabled: true, type: "email" },
-              { name: "phone",      label: "Phone" },
-              { name: "age",        label: "Age",          type: "number" },
-              { name: "bloodGroup", label: "Blood Group" },
-              { name: "address",    label: "Address" },
-            ].map((f) => (
-              <div key={f.name}>
-                <label className="label">{f.label}</label>
-                <input name={f.name} type={f.type || "text"} value={form[f.name]}
-                  onChange={handleChange} className={`input ${f.disabled ? "bg-slate-50 text-slate-400 cursor-not-allowed" : ""}`}
-                  disabled={f.disabled} />
-              </div>
-            ))}
-            <div>
-              <label className="label">Gender</label>
-              <select name="gender" value={form.gender} onChange={handleChange} className="input">
-                <option value="">Select</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Other</option>
-              </select>
+      <Card>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {FIELDS.map(({ key, label, type, readOnly, options }) => (
+            <div key={key} className={key === "address" ? "sm:col-span-2" : ""}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">{label}</label>
+              {!editing || readOnly ? (
+                <p className="text-sm font-medium text-slate-800 py-2 px-3 bg-slate-50 rounded-xl">
+                  {profile?.[key] || "—"}
+                </p>
+              ) : type === "select" ? (
+                <select value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select…</option>
+                  {options.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : (
+                <input type={type} value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              )}
             </div>
-          </div>
-        </Card>
-
-        <Card>
-          <h3 className="font-bold text-slate-800 mb-4">Medical Information</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="label">Emergency Contact</label><input name="emergencyContact" value={form.emergencyContact} onChange={handleChange} className="input" /></div>
-            <div><label className="label">Known Allergies</label><input name="allergies" value={form.allergies} onChange={handleChange} className="input" /></div>
-            <div className="col-span-2"><label className="label">Existing Conditions</label><textarea name="conditions" value={form.conditions} onChange={handleChange} className="input resize-none h-20" /></div>
-          </div>
-        </Card>
-
-        <Button type="submit" loading={loading} size="lg" className="flex items-center gap-2">
-          <FiSave size={16} /> Save Changes
-        </Button>
-      </form>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 };

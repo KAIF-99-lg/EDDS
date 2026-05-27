@@ -13,25 +13,11 @@ const toDisplayResult = (data) => ({
   timestamp: data.timestamp || data.created_at,
 });
 
-const generateSampleImage = (type) =>
-  new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 224; canvas.height = 224;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#111"; ctx.fillRect(0, 0, 224, 224);
-    const g = ctx.createRadialGradient(112, 112, 10, 112, 112, 100);
-    g.addColorStop(0, "#fff"); g.addColorStop(0.4, "#888"); g.addColorStop(1, "#111");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, 224, 224);
-    canvas.toBlob((blob) =>
-      resolve(new File([blob], `sample_${type}.png`, { type: "image/png" }))
-    );
-  });
-
 const samples = [
-  { type: "glioma",     label: "Glioma" },
-  { type: "meningioma", label: "Meningioma" },
-  { type: "notumor",    label: "No Tumor" },
-  { type: "pituitary",  label: "Pituitary" },
+  { label: "Glioma",     path: "/samples/brain/glioma/image.jpg",     ext: "jpg" },
+  { label: "Meningioma", path: "/samples/brain/meningioma/image.jpg", ext: "jpg" },
+  { label: "No Tumor",   path: "/samples/brain/no_tumor/image.png",   ext: "png" },
+  { label: "Pituitary",  path: "/samples/brain/pituitary/image.jpg",  ext: "jpg" },
 ];
 
 const BrainTumorDetection = () => {
@@ -42,13 +28,14 @@ const BrainTumorDetection = () => {
   const [error, setError]           = useState("");
   const [activeSample, setActiveSample] = useState(null);
 
-  const loadSampleImage = async (type) => {
-    const file = await generateSampleImage(type);
+  const loadSample = async ({ label, path, ext }) => {
+    const res  = await fetch(path);
+    const blob = await res.blob();
+    const file = new File([blob], `sample_${label}.${ext}`, { type: blob.type });
     setImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setActiveSample(type);
-    setResult(null);
-    setError("");
+    setPreviewUrl(path);
+    setActiveSample(label);
+    setResult(null); setError("");
   };
 
   const handleFileSelect = (file) => {
@@ -90,13 +77,13 @@ const BrainTumorDetection = () => {
           <h2 className="font-bold text-slate-800 mb-3">Upload MRI Scan</h2>
           {error && <div className="mb-4"><Alert type="error" message={error} onClose={() => setError("")} /></div>}
 
-          <div className="mb-4">
+          <div className="mb-3">
             <p className="text-xs text-slate-500 mb-2 font-medium">Quick Test Samples:</p>
             <div className="flex flex-wrap gap-2">
               {samples.map((s) => (
-                <button key={s.type} type="button" onClick={() => loadSampleImage(s.type)}
+                <button key={s.label} type="button" onClick={() => loadSample(s)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                    activeSample === s.type
+                    activeSample === s.label
                       ? "border-purple-500 bg-purple-100 text-purple-800"
                       : "border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700"
                   }`}>
