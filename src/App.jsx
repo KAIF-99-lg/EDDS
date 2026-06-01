@@ -1,7 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ProtectedRoute } from "./layouts/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
+
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+};
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -22,8 +27,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout showUser />}>
               <Route path="/dashboard"     element={<UserDashboard />} />
