@@ -90,8 +90,10 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 app.config["SQLALCHEMY_DATABASE_URI"] = (
+    os.getenv("DATABASE_URL") or
     f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
-    f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME')}"
+    f"?sslmode=require"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
