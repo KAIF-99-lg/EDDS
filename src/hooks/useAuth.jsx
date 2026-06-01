@@ -9,22 +9,19 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) { setReady(true); return; }
-    // verify token by fetching profile
+    const stored = authService.getCurrentUser();
+    if (!token || !stored) { setReady(true); return; }
+    setUser(stored);
+    // verify token in background
     fetch((import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api") + "/patients/me", {
       headers: { Authorization: `Bearer ${token}` },
     }).then((res) => {
       if (res.ok) return res.json();
-      authService.logout();
       return null;
     }).then((profile) => {
-      if (profile) {
-        const stored = authService.getCurrentUser();
-        setUser({ ...stored, ...profile });
-      }
-    }).catch(() => {
-      authService.logout();
-    }).finally(() => setReady(true));
+      if (profile) setUser((prev) => ({ ...prev, ...profile }));
+    }).catch(() => {})
+    .finally(() => setReady(true));
   }, []);
 
   const login = async (email, password) => {
