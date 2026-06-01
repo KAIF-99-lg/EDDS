@@ -62,11 +62,11 @@ const Login = () => {
 
             {/* Logo */}
             <Link to="/" className="mb-6 inline-block">
-              <img src={logoImg} alt="ZenMD" className="h-9 w-auto object-contain" />
+              <img src={logoImg} alt="TrueMD" className="h-9 w-auto object-contain" />
             </Link>
 
             <h1 className="text-2xl font-bold text-slate-900 mb-1">Welcome Back</h1>
-            <p className="text-slate-500 text-sm mb-6">Login to continue to ZenMD</p>
+            <p className="text-slate-500 text-sm mb-6">Login to continue to TrueMD</p>
 
             {error && (
               <div className="mb-4">
@@ -162,14 +162,14 @@ const Login = () => {
           {/* ── RIGHT — IMAGE ── */}
           <div className="hidden lg:block w-1/2 relative overflow-hidden">
             {/* Image */}
-            <img src={loginImg} alt="ZenMD Healthcare" className="absolute inset-0 w-full h-full object-cover object-center" />
+            <img src={loginImg} alt="TrueMD Healthcare" className="absolute inset-0 w-full h-full object-cover object-center" />
 
             {/* Gradient overlay */}
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(15,23,80,0.92) 0%, rgba(29,78,216,0.5) 45%, rgba(0,0,0,0.1) 100%)" }} />
 
             {/* Bottom branding */}
             <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-              <img src={logoImg} alt="ZenMD" className="h-8 w-auto brightness-0 invert mb-4 opacity-90" />
+              <img src={logoImg} alt="TrueMD" className="h-8 w-auto brightness-0 invert mb-4 opacity-90" />
               <h2 className="text-white text-xl font-bold mb-2">Smart AI Healthcare Platform</h2>
               <p className="text-blue-200 text-sm leading-relaxed mb-5">
                 Fast, secure and intelligent disease prediction powered by deep learning.

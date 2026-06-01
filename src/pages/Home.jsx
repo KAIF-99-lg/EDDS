@@ -36,7 +36,7 @@ const Home = () => {
     <nav className="border-b border-slate-100 px-6 py-4 sticky top-0 z-40 bg-white/90 backdrop-blur">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <img src={logoImg} alt="ZenMD" className="h-9 w-auto object-contain" />
+          <img src={logoImg} alt="TrueMD" className="h-9 w-auto object-contain" />
         </div>
         <Link to={isAuthenticated ? "/dashboard" : "/login"}>
           <Button size="sm">{isAuthenticated ? <><FiUser size={14}/> Dashboard</> : "Sign In"}</Button>

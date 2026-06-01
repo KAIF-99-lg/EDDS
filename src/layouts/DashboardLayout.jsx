@@ -36,7 +36,7 @@ const DashboardLayout = ({ showUser }) => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-5 border-b border-slate-100 flex items-center gap-3">
-        <img src={logoImg} alt="ZenMD" className="h-8 w-auto object-contain" />
+        <img src={logoImg} alt="TrueMD" className="h-8 w-auto object-contain" />
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -92,7 +92,7 @@ const DashboardLayout = ({ showUser }) => {
               <FiMenu size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <img src={logoImg} alt="ZenMD" className="h-7 w-auto object-contain" />
+              <img src={logoImg} alt="TrueMD" className="h-7 w-auto object-contain" />
             </div>
           </div>
           {!showUser && (

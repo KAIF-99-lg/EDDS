@@ -19,7 +19,7 @@ const Footer = () => (
         {/* Brand */}
         <div className="lg:col-span-1">
           <div className="flex items-center gap-2 mb-4">
-            <img src={logoImg} alt="ZenMD" className="h-9 w-auto object-contain brightness-0 invert" />
+            <img src={logoImg} alt="TrueMD" className="h-9 w-auto object-contain brightness-0 invert" />
           </div>
           <p className="text-sm leading-relaxed mb-5">
             AI-powered medical platform for intelligent disease detection and patient health monitoring.
@@ -28,7 +28,7 @@ const Footer = () => (
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
               <FiMail size={12} className="text-blue-400 flex-shrink-0" />
-              <span>support@zenmd.ai</span>
+              <span>support@TrueMD.ai</span>
             </div>
             <div className="flex items-center gap-2">
               <FiPhone size={12} className="text-blue-400 flex-shrink-0" />
@@ -106,7 +106,7 @@ const Footer = () => (
       <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm">
           <RiHeartPulseFill className="text-blue-500" size={14} />
-          <span>© 2026 ZenMD. All rights reserved.</span>
+          <span>© 2026 TrueMD. All rights reserved.</span>
         </div>
 
         {/* Social icons */}
