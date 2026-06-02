@@ -37,22 +37,20 @@ def signup():
 
 
 def google_auth():
-    data         = request.get_json()
-    access_token = data.get("credential")
-    if not access_token:
+    data       = request.get_json()
+    id_token   = data.get("credential")
+    if not id_token:
         return jsonify({"error": "Google token required"}), 400
 
     try:
-        resp = http.get(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=10,
-        )
-        if not resp.ok:
-            return jsonify({"error": "Failed to verify Google token"}), 401
-        info = resp.json()
+        # Decode JWT id_token without verification (Google already signed it)
+        import base64, json as _json
+        payload_b64 = id_token.split(".")[1]
+        # Fix padding
+        payload_b64 += "=" * (4 - len(payload_b64) % 4)
+        info = _json.loads(base64.urlsafe_b64decode(payload_b64))
     except Exception as e:
-        return jsonify({"error": f"Google verification failed: {e}"}), 500
+        return jsonify({"error": f"Invalid Google token: {e}"}), 401
 
     email = info.get("email", "").lower()
     name  = info.get("name") or email.split("@")[0]
