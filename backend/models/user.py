@@ -8,7 +8,7 @@ class User(db.Model):
     id                = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name              = db.Column(db.String(100), nullable=False)
     email             = db.Column(db.String(120), unique=True, nullable=False)
-    password          = db.Column(db.String(255), nullable=False)
+    password          = db.Column(db.String(255), nullable=True)
     phone             = db.Column(db.String(20))
     age               = db.Column(db.Integer)
     gender            = db.Column(db.String(10))
@@ -17,6 +17,7 @@ class User(db.Model):
     emergency_contact = db.Column(db.String(20))
     allergies         = db.Column(db.String(255))
     conditions        = db.Column(db.Text)
+    role              = db.Column(db.String(20), default="patient")
     created_at        = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -32,5 +33,6 @@ class User(db.Model):
             "emergency_contact": self.emergency_contact,
             "allergies":         self.allergies,
             "conditions":        self.conditions.split(",") if self.conditions else [],
+            "role":               self.role or "patient",
             "created_at":        self.created_at.isoformat(),
         }

@@ -108,7 +108,21 @@ with app.app_context():
     from models.user import User
     from models.prediction import Prediction
     db.create_all()
-    logger.info("✅ Tables ready")
+    try:
+        with db.engine.connect() as conn:
+            existing = [r[0] for r in conn.execute(db.text(
+                "SELECT column_name FROM information_schema.columns WHERE table_name='users'"
+            ))]
+            for col, sql in {
+                "role": "ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'patient'",
+            }.items():
+                if col not in existing:
+                    conn.execute(db.text(sql))
+                    logger.info(f"Migration: added '{col}' to users")
+            conn.commit()
+    except Exception as e:
+        logger.error(f"Migration error: {e}")
+    logger.info("Tables ready")
 
 CORS(app, supports_credentials=True, resources={r"/*": {
     "origins": [
