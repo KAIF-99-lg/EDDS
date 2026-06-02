@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiMail, FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
+import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../hooks/useAuth";
 import { useForm } from "../hooks/useForm";
 import Alert from "../components/Alert";
@@ -28,16 +29,32 @@ const GoogleIcon = () => (
 );
 
 const Signup = () => {
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
   const navigate   = useNavigate();
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [gLoading, setGLoading] = useState(false);
   const [success,  setSuccess]  = useState("");
   const [error,    setError]    = useState("");
 
   const { values, errors, touched, handleChange, handleBlur, validateAll } = useForm(
     { name: "", email: "", password: "" }, validate
   );
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGLoading(true); setError("");
+      try {
+        await googleLogin(tokenResponse.access_token);
+        navigate("/dashboard");
+      } catch {
+        setError("Google sign-in failed. Please try again.");
+      } finally {
+        setGLoading(false);
+      }
+    },
+    onError: () => setError("Google sign-in failed. Please try again."),
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,9 +92,10 @@ const Signup = () => {
             {success && <div className="mb-3"><Alert type="success" message={success} /></div>}
 
             {/* Google */}
-            <button className="w-full flex items-center justify-center gap-3 border border-slate-200 bg-white hover:bg-slate-50 hover:border-blue-300 rounded-xl py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 shadow-sm mb-4">
+            <button onClick={() => handleGoogleLogin()} disabled={gLoading}
+              className="w-full flex items-center justify-center gap-3 border border-slate-200 bg-white hover:bg-slate-50 hover:border-blue-300 rounded-xl py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 shadow-sm mb-4 disabled:opacity-60">
               <GoogleIcon />
-              Continue with Google
+              {gLoading ? "Signing in..." : "Continue with Google"}
             </button>
 
             {/* Divider */}

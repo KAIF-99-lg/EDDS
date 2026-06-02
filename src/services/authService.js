@@ -11,6 +11,16 @@ export const authService = {
     return data;
   },
 
+  googleLogin: async (credential) => {
+    const data = await apiRequest("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    });
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    return data;
+  },
+
   signup: async (userData) => {
     return await apiRequest("/auth/signup", {
       method: "POST",

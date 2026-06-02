@@ -32,6 +32,12 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const googleLogin = async (accessToken) => {
+    const data = await authService.googleLogin(accessToken);
+    setUser(data.user);
+    return data;
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
@@ -44,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   if (!ready) return null;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, signup, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, googleLogin, logout, signup, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
