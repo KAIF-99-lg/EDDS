@@ -81,8 +81,18 @@ def validate_medical_image(image_file, expected_type):
 
     if _clf is not None and _le is not None:
         try:
-            feat      = _extract_features(arr)
-            predicted = _le.inverse_transform(_clf.predict(feat))[0]
+            feat       = _extract_features(arr)
+            proba      = _clf.predict_proba(feat)[0]
+            top_idx    = int(np.argmax(proba))
+            top_conf   = float(proba[top_idx])
+            predicted  = _le.inverse_transform([top_idx])[0]
+
+            # Low confidence = not a medical image
+            if top_conf < 0.5:
+                return False, (
+                    "This does not appear to be a valid medical image. "
+                    "Please upload the correct scan."
+                )
         except Exception as e:
             print(f"sklearn classifier error: {e} - falling back to rule-based")
             predicted = _rule_based_classify(arr)
