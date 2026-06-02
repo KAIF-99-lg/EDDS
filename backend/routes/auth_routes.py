@@ -1,7 +1,8 @@
 from flask import Blueprint
-from controllers.auth_controller import login, signup
+from controllers.auth_controller import login, signup, google_auth
 
 auth_bp = Blueprint("auth", __name__)
 
 auth_bp.post("/login")(login)
 auth_bp.post("/signup")(signup)
+auth_bp.post("/google")(google_auth)
