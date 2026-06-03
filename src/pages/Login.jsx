@@ -3,11 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { GoogleLogin } from "@react-oauth/google";
 import logoImg from "../assets/logo.png";
-import loginImg from "../assets/login_signup_page image.jpeg";
 import { useAuth } from "../hooks/useAuth";
 import { useForm } from "../hooks/useForm";
 import Alert from "../components/Alert";
-import Footer from "../components/Footer";
 
 const validate = (v) => {
   const e = {};
@@ -17,34 +15,15 @@ const validate = (v) => {
   return e;
 };
 
-const GoogleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 48 48">
-    <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/>
-    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.6 26.8 36 24 36c-5.2 0-9.6-2.9-11.3-7.1l-6.6 4.8C9.6 39.6 16.3 44 24 44z"/>
-    <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.4-2.5 4.4-4.6 5.8l6.2 5.2C40.8 35.5 44 30.2 44 24c0-1.3-.1-2.7-.4-4z"/>
-  </svg>
-);
-
 const Login = () => {
   const { login, googleLogin } = useAuth();
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
-  const [remember, setRemember] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const { values, errors, touched, handleChange, handleBlur, validateAll } = useForm(
     { email: "", password: "" }, validate
   );
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      await googleLogin(credentialResponse.credential);
-      navigate("/dashboard");
-    } catch {
-      setError("Google sign-in failed. Please try again.");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,152 +39,166 @@ const Login = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate("/dashboard");
+    } catch {
+      setError("Google sign-in failed. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 50%, #e8f0fe 100%)" }}>
+    <div className="min-h-screen flex text-white" style={{
+      background: "radial-gradient(ellipse at 30% 30%, #0a0f1e 0%, #060910 60%, #000 100%)",
+    }}>
 
-      <div className="flex-1 flex items-center justify-center p-4 py-8">
-        {/* ── CARD ── */}
-        <div className="w-full flex overflow-hidden rounded-2xl shadow-2xl" style={{ maxWidth: 1100, height: "85vh", minHeight: 560 }}>
+      {/* Grid overlay */}
+      <div className="fixed inset-0 pointer-events-none" style={{
+        backgroundImage: `linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px)`,
+        backgroundSize: "60px 60px",
+      }} />
 
-          {/* ── LEFT — FORM ── */}
-          <div className="w-full lg:w-1/2 bg-white flex flex-col justify-center px-8 sm:px-12 py-8 overflow-y-auto">
+      {/* Glow */}
+      <div className="fixed pointer-events-none" style={{
+        top: "20%", left: "10%", width: 500, height: 500,
+        background: "radial-gradient(circle, rgba(0,100,255,0.1) 0%, transparent 70%)",
+        borderRadius: "50%",
+      }} />
 
-            {/* Logo */}
-            <Link to="/" className="mb-6 inline-block">
-              <img src={logoImg} alt="TrueMD" className="h-9 w-auto object-contain" />
-            </Link>
+      {/* ── LEFT PANEL — branding ── */}
+      <div className="hidden lg:flex flex-col justify-between w-1/2 p-16 relative z-10"
+        style={{ borderRight: "1px solid rgba(0,200,255,0.08)" }}>
 
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Welcome Back</h1>
-            <p className="text-slate-500 text-sm mb-6">Login to continue to TrueMD</p>
+        <Link to="/">
+          <img src={logoImg} alt="TrueMD" className="h-10 w-auto object-contain"
+            style={{ filter: "brightness(0) invert(1)" }} />
+        </Link>
 
-            {error && (
-              <div className="mb-4">
-                <Alert type="error" message={error} onClose={() => setError("")} />
+        <div>
+          <div className="text-xs font-mono tracking-widest text-cyan-400 mb-4 uppercase">// AI Diagnostic System</div>
+          <h1 className="text-5xl font-black leading-none mb-6">
+            MEDICAL<br />
+            <span style={{ background: "linear-gradient(90deg,#00c8ff,#0066ff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              INTELLIGENCE
+            </span>
+          </h1>
+          <p className="text-slate-500 font-mono text-sm leading-relaxed max-w-sm">
+            AI-powered disease detection for Brain Tumor, Breast Cancer, Pneumonia, Skin Cancer and Heart Disease.
+          </p>
+
+          <div className="flex gap-10 mt-12">
+            {[["5+", "AI MODELS"], ["99%", "ACCURACY"], ["&lt;3s", "RESPONSE"]].map(([v, l]) => (
+              <div key={l}>
+                <div className="text-2xl font-black" style={{ color: "#00c8ff" }}
+                  dangerouslySetInnerHTML={{ __html: v }} />
+                <div className="text-xs font-mono text-slate-600 tracking-widest mt-1">{l}</div>
               </div>
-            )}
-
-            {/* Google */}
-            <div className="mb-4">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError("Google sign-in failed. Please try again.")}
-                width="100%"
-                theme="outline"
-                size="large"
-                text="continue_with"
-                shape="rectangular"
-              />
-            </div>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs text-slate-400 font-medium whitespace-nowrap">or continue with email</span>
-              <div className="flex-1 h-px bg-slate-200" />
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Email */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
-                <div className="relative">
-                  <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                  <input
-                    name="email" type="email" value={values.email}
-                    onChange={handleChange} onBlur={handleBlur}
-                    placeholder="you@example.com"
-                    className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-xl outline-none bg-slate-50
-                      transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
-                      ${touched.email && errors.email ? "border-red-400 bg-red-50" : "border-slate-200"}`}
-                  />
-                </div>
-                {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-                <div className="relative">
-                  <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                  <input
-                    name="password" type={showPass ? "text" : "password"} value={values.password}
-                    onChange={handleChange} onBlur={handleBlur}
-                    placeholder="••••••••"
-                    className={`w-full pl-9 pr-10 py-2.5 text-sm border rounded-xl outline-none bg-slate-50
-                      transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
-                      ${touched.password && errors.password ? "border-red-400 bg-red-50" : "border-slate-200"}`}
-                  />
-                  <button type="button" onClick={() => setShowPass(!showPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
-                    {showPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
-                  </button>
-                </div>
-                {touched.password && errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-              </div>
-
-              {/* Remember + Forgot */}
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
-                    className="w-3.5 h-3.5 accent-blue-600 rounded" />
-                  <span className="text-xs text-slate-600">Remember me</span>
-                </label>
-                <a href="#" className="text-xs text-blue-600 font-semibold hover:text-blue-700 hover:underline transition-colors">
-                  Forgot Password?
-                </a>
-              </div>
-
-              {/* Submit */}
-              <button type="submit" disabled={loading}
-                className="w-full py-2.5 mt-1 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-sm font-semibold
-                  rounded-xl transition-all duration-200 shadow-md shadow-blue-200 disabled:opacity-60
-                  flex items-center justify-center gap-2">
-                {loading ? (
-                  <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                  </svg> Signing in...</>
-                ) : "Login →"}
-              </button>
-            </form>
-
-            <p className="text-center text-xs text-slate-500 mt-5">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-blue-600 font-semibold hover:underline">Sign up free</Link>
-            </p>
+            ))}
           </div>
+        </div>
 
-          {/* ── RIGHT — IMAGE ── */}
-          <div className="hidden lg:block w-1/2 relative overflow-hidden">
-            {/* Image */}
-            <img src={loginImg} alt="TrueMD Healthcare" className="absolute inset-0 w-full h-full object-cover object-center" />
-
-            {/* Gradient overlay */}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(15,23,80,0.92) 0%, rgba(29,78,216,0.5) 45%, rgba(0,0,0,0.1) 100%)" }} />
-
-            {/* Bottom branding */}
-            <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-              <img src={logoImg} alt="TrueMD" className="h-8 w-auto brightness-0 invert mb-4 opacity-90" />
-              <h2 className="text-white text-xl font-bold mb-2">Smart AI Healthcare Platform</h2>
-              <p className="text-blue-200 text-sm leading-relaxed mb-5">
-                Fast, secure and intelligent disease prediction powered by deep learning.
-              </p>
-              <div className="flex gap-8">
-                {[["5+", "AI Models"], ["99%", "Accuracy"], ["24/7", "Available"]].map(([val, label]) => (
-                  <div key={label}>
-                    <p className="text-white font-bold text-base">{val}</p>
-                    <p className="text-blue-300 text-xs">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
+        <div className="text-xs font-mono text-slate-700">
+          © 2026 TrueMD — All systems operational
         </div>
       </div>
 
-      <Footer />
+      {/* ── RIGHT PANEL — form ── */}
+      <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 relative z-10">
+
+        {/* Mobile logo */}
+        <Link to="/" className="lg:hidden mb-10">
+          <img src={logoImg} alt="TrueMD" className="h-9 w-auto object-contain"
+            style={{ filter: "brightness(0) invert(1)" }} />
+        </Link>
+
+        <div className="max-w-sm w-full mx-auto lg:mx-0">
+          <div className="text-xs font-mono tracking-widest text-cyan-400 mb-2 uppercase">// Auth Portal</div>
+          <h2 className="text-3xl font-black text-white mb-1">WELCOME BACK</h2>
+          <p className="text-slate-500 text-sm font-mono mb-8">Authenticate to access the system</p>
+
+          {error && <div className="mb-5"><Alert type="error" message={error} onClose={() => setError("")} /></div>}
+
+          {/* Google */}
+          <div className="mb-5">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google sign-in failed. Please try again.")}
+              width="100%"
+              theme="filled_black"
+              size="large"
+              text="continue_with"
+              shape="rectangular"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px" style={{ background: "rgba(0,200,255,0.1)" }} />
+            <span className="text-xs font-mono text-slate-600">OR</span>
+            <div className="flex-1 h-px" style={{ background: "rgba(0,200,255,0.1)" }} />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-mono tracking-widest text-slate-500 mb-2 uppercase">Email</label>
+              <div className="relative">
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={15} />
+                <input name="email" type="email" value={values.email}
+                  onChange={handleChange} onBlur={handleBlur}
+                  placeholder="you@example.com"
+                  className="w-full pl-11 pr-4 py-3 text-sm font-mono bg-transparent outline-none text-white placeholder-slate-700 transition-all"
+                  style={{
+                    border: touched.email && errors.email ? "1px solid #f43f5e" : "1px solid rgba(0,200,255,0.15)",
+                    background: "rgba(0,200,255,0.02)",
+                  }} />
+              </div>
+              {touched.email && errors.email && <p className="text-red-400 text-xs font-mono mt-1">{errors.email}</p>}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-mono tracking-widest text-slate-500 mb-2 uppercase">Password</label>
+              <div className="relative">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={15} />
+                <input name="password" type={showPass ? "text" : "password"} value={values.password}
+                  onChange={handleChange} onBlur={handleBlur}
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-12 py-3 text-sm font-mono bg-transparent outline-none text-white placeholder-slate-700"
+                  style={{
+                    border: touched.password && errors.password ? "1px solid #f43f5e" : "1px solid rgba(0,200,255,0.15)",
+                    background: "rgba(0,200,255,0.02)",
+                  }} />
+                <button type="button" onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-cyan-400 transition-colors">
+                  {showPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                </button>
+              </div>
+              {touched.password && errors.password && <p className="text-red-400 text-xs font-mono mt-1">{errors.password}</p>}
+            </div>
+
+            <button type="submit" disabled={loading}
+              className="w-full py-3 mt-2 text-sm font-bold tracking-widest uppercase transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, #0066ff, #00c8ff)",
+                clipPath: "polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)",
+                boxShadow: "0 0 20px rgba(0,200,255,0.2)",
+              }}>
+              {loading ? (
+                <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg> AUTHENTICATING...</>
+              ) : "LOGIN →"}
+            </button>
+          </form>
+
+          <p className="text-center text-xs font-mono text-slate-600 mt-8">
+            No account?{" "}
+            <Link to="/signup" className="text-cyan-400 hover:text-cyan-300 transition-colors">CREATE ONE</Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
