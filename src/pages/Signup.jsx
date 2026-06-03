@@ -184,27 +184,9 @@ const Signup = () => {
       </div>
 
       {/* ── RIGHT PANEL — image ── */}
-      <div className="hidden lg:block w-2/5 relative overflow-hidden">
+      <div className="hidden lg:block w-1/2 relative overflow-hidden">
         <img src={loginImg} alt="TrueMD" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,5,20,0.95) 0%, rgba(0,10,40,0.6) 50%, rgba(0,0,0,0.2) 100%)" }} />
-        <div className="absolute inset-0 p-16 flex flex-col justify-between z-10">
-          <div />
-          <div>
-            <div className="text-xs font-mono tracking-widest text-cyan-400 mb-4 uppercase">// System Features</div>
-            {[
-              ["INSTANT RESULTS", "Get AI predictions in under 3 seconds"],
-              ["PRIVACY FIRST",   "Images processed securely, never shared"],
-              ["DEEP LEARNING",   "Models trained on thousands of medical scans"],
-              ["5 DISEASES",      "Brain, Breast, Lung, Skin & Heart"],
-            ].map(([title, desc]) => (
-              <div key={title} className="mb-5 pl-4" style={{ borderLeft: "2px solid rgba(0,200,255,0.4)" }}>
-                <div className="text-sm font-bold text-white font-mono mb-1">{title}</div>
-                <div className="text-xs text-slate-400 font-mono">{desc}</div>
-              </div>
-            ))}
-          </div>
-          <div className="text-xs font-mono text-slate-600">© 2026 TrueMD — All systems operational</div>
-        </div>
+        <div className="absolute inset-0" style={{ background: "rgba(0,5,20,0.4)" }} />
       </div>
     </div>
   );
