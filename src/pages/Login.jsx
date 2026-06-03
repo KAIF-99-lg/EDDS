@@ -70,29 +70,7 @@ const Login = () => {
       {/* ── LEFT PANEL — image ── */}
       <div className="hidden lg:block w-1/2 relative overflow-hidden">
         <img src={loginImg} alt="TrueMD" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,5,20,0.95) 0%, rgba(0,10,40,0.6) 50%, rgba(0,0,0,0.3) 100%)" }} />
-        <div className="absolute inset-0 p-16 flex flex-col justify-between z-10">
-          <Link to="/">
-            <img src={logoImg} alt="TrueMD" className="h-10 w-auto object-contain" style={{ filter: "brightness(0) invert(1)" }} />
-          </Link>
-          <div>
-            <div className="text-xs font-mono tracking-widest text-cyan-400 mb-4 uppercase">// AI Diagnostic System</div>
-            <h1 className="text-5xl font-black leading-none mb-6">
-              MEDICAL<br />
-              <span style={{ background: "linear-gradient(90deg,#00c8ff,#0066ff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>INTELLIGENCE</span>
-            </h1>
-            <p className="text-slate-300 font-mono text-sm leading-relaxed max-w-sm">AI-powered disease detection for Brain Tumor, Breast Cancer, Pneumonia, Skin Cancer and Heart Disease.</p>
-            <div className="flex gap-10 mt-10">
-              {[["5+", "AI MODELS"], ["99%", "ACCURACY"], ["<3s", "RESPONSE"]].map(([v, l]) => (
-                <div key={l}>
-                  <div className="text-2xl font-black" style={{ color: "#00c8ff" }}>{v}</div>
-                  <div className="text-xs font-mono text-slate-400 tracking-widest mt-1">{l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="text-xs font-mono text-slate-600">© 2026 TrueMD — All systems operational</div>
-        </div>
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,5,20,0.6) 0%, rgba(0,0,0,0.1) 100%)" }} />
       </div>
 
       {/* ── RIGHT PANEL — form ── */}
