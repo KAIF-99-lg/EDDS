@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useForm } from "../hooks/useForm";
 import Alert from "../components/Alert";
 import logoImg from "../assets/logo.png";
+import loginImg from "../assets/login_signup_page image.jpeg";
 
 const validate = (v) => {
   const e = {};
@@ -182,30 +183,27 @@ const Signup = () => {
         </div>
       </div>
 
-      {/* ── RIGHT PANEL — branding ── */}
-      <div className="hidden lg:flex flex-col justify-between w-2/5 p-16 relative z-10"
-        style={{ borderLeft: "1px solid rgba(0,200,255,0.08)" }}>
-
-        <div />
-
-        <div>
-          <div className="text-xs font-mono tracking-widest text-cyan-400 mb-4 uppercase">// System Features</div>
-          {[
-            ["INSTANT RESULTS",  "Get AI predictions in under 3 seconds"],
-            ["PRIVACY FIRST",    "Images processed securely, never shared"],
-            ["DEEP LEARNING",    "Models trained on thousands of medical scans"],
-            ["5 DISEASES",       "Brain, Breast, Lung, Skin & Heart"],
-          ].map(([title, desc]) => (
-            <div key={title} className="mb-6 pl-4"
-              style={{ borderLeft: "2px solid rgba(0,200,255,0.2)" }}>
-              <div className="text-sm font-bold text-white font-mono mb-1">{title}</div>
-              <div className="text-xs text-slate-600 font-mono">{desc}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-xs font-mono text-slate-700">
-          © 2026 TrueMD — All systems operational
+      {/* ── RIGHT PANEL — image ── */}
+      <div className="hidden lg:block w-2/5 relative overflow-hidden">
+        <img src={loginImg} alt="TrueMD" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to left, rgba(0,5,20,0.9) 0%, rgba(0,10,40,0.6) 50%, rgba(0,0,0,0.2) 100%)" }} />
+        <div className="absolute inset-0 p-16 flex flex-col justify-between z-10">
+          <div />
+          <div>
+            <div className="text-xs font-mono tracking-widest text-cyan-400 mb-4 uppercase">// System Features</div>
+            {[
+              ["INSTANT RESULTS", "Get AI predictions in under 3 seconds"],
+              ["PRIVACY FIRST",   "Images processed securely, never shared"],
+              ["DEEP LEARNING",   "Models trained on thousands of medical scans"],
+              ["5 DISEASES",      "Brain, Breast, Lung, Skin & Heart"],
+            ].map(([title, desc]) => (
+              <div key={title} className="mb-5 pl-4" style={{ borderLeft: "2px solid rgba(0,200,255,0.4)" }}>
+                <div className="text-sm font-bold text-white font-mono mb-1">{title}</div>
+                <div className="text-xs text-slate-400 font-mono">{desc}</div>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs font-mono text-slate-600">© 2026 TrueMD — All systems operational</div>
         </div>
       </div>
     </div>

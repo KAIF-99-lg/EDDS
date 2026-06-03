@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FiArrowRight, FiUser } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
+import Footer from "../components/Footer";
 import logoImg from "../assets/logo.png";
 
 import brainIcon  from "../../icons_home_page/brain.png";
@@ -155,8 +156,7 @@ const Home = () => {
 
               <div className="w-16 h-16 mb-4 mx-auto flex items-center justify-center rounded-lg overflow-hidden"
                 style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${d.accent}30` }}>
-                <img src={d.icon} alt={d.label} className="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-300"
-                  style={{ filter: "brightness(0) invert(1)" }} />
+                <img src={d.icon} alt={d.label} className="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-300" />
               </div>
 
               <p className="font-bold text-sm text-white text-center mb-1">{d.label}</p>
@@ -236,10 +236,7 @@ const Home = () => {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 px-8 py-6 text-center font-mono text-xs text-slate-600"
-        style={{ borderTop: "1px solid rgba(0,200,255,0.08)" }}>
-        © 2026 TrueMD — AI Healthcare Platform &nbsp;|&nbsp; All systems operational
-      </footer>
+      <Footer />
 
     </div>
   );
