@@ -186,7 +186,7 @@ const Signup = () => {
       {/* ── RIGHT PANEL — image ── */}
       <div className="hidden lg:block w-2/5 relative overflow-hidden">
         <img src={loginImg} alt="TrueMD" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to left, rgba(0,5,20,0.9) 0%, rgba(0,10,40,0.6) 50%, rgba(0,0,0,0.2) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,5,20,0.95) 0%, rgba(0,10,40,0.6) 50%, rgba(0,0,0,0.2) 100%)" }} />
         <div className="absolute inset-0 p-16 flex flex-col justify-between z-10">
           <div />
           <div>
